@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vespa Elegance</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <%- include("partials/admin/header") %>
+  <div class="admin-container">
+    <%- include("partials/admin/sidebar") %>
+
+    <main class="admin-main">
+      <h1>Vespa Service & Maintenance</h1>
+
+      <table class="table table-bordered mt-4">
+        <thead class="table-light">
+          <tr>
+            <th>Service</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Duration</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic Service</td>
+            <td>Engine check, oil change, tire inspection</td>
+            <td>₹999</td>
+            <td>45 minutes</td>
+          </tr>
+          <tr>
+            <td>Full Service</td>
+            <td>Complete check-up, engine tuning, cleaning</td>
+            <td>₹2,499</td>
+            <td>2 hours</td>
+          </tr>
+          <tr>
+            <td>Brake & Suspension</td>
+            <td>Brake pad replacement and suspension check</td>
+            <td>₹1,499</td>
+            <td>1 hour</td>
+          </tr>
+        </tbody>
+      </table>
+
+    </main>
+  </div>
+
+  <%- include("partials/admin/footer") %>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+
+
+
+
+ <%- include('../partials/admin/header') %>
+
+<div class="admin-container">
+  
+  <!-- Sidebar -->
+  <%- include('../partials/admin/sidebar') %>
+
+  <!-- Main Content -->
+  <main class="admin-main dashboard-main">
+    <h2>Welcome Admin</h2>
+
+    <!-- Stats Section -->
+    <div class="stats">
+      <div class="stat-card">📦 Products: <%= productCount %></div>
+      <div class="stat-card">🛒 Orders: <%= orderCount %></div>
+      <div class="stat-card">👤 Users: <%= userCount %></div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="chart-container">
+      <canvas id="salesChart"></canvas>
+    </div>
+  </main>
+</div>
+
+<%- include('../partials/admin/footer') %>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const ctx = document.getElementById('salesChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: <%- JSON.stringify(salesLabel) %>,
+      datasets: [{
+        label: 'Sales Amount',
+        data: <%- JSON.stringify(salesData) %>,
+        borderColor: '#007bff',
+        fill: false,
+        tension: 0.3
+      }]
+    }
+  });
+</script>

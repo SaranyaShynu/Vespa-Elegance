@@ -1,0 +1,24 @@
+<h4>Have a Coupon?</h4>
+
+<form action="/apply-coupon" method="POST">
+  <input type="text" name="couponCode" placeholder="Enter coupon" required>
+  <button type="submit" class="btn btn-primary">Apply</button>
+</form>
+
+<% if (couponApplied) { %>
+  <div class="alert alert-success">
+    Coupon "<%= couponApplied.code %>" applied!
+  </div>
+<% } %>
+
+
+<form action="/place-order" method="POST">
+  <!-- other form fields -->
+
+  <% if (appliedCoupon) { %>
+    <input type="hidden" name="couponCode" value="<%= couponApplied.code %>">
+  <% } %>
+
+  <button type="submit" class="btn btn-success">Place Order</button>
+</form>
+

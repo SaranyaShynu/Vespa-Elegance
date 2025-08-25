@@ -1,0 +1,44 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vespa Elegance</title>
+  <link rel="stylesheet" href="/css/admin.css"> <!-- link to your admin CSS -->
+</head>
+<body>
+
+ <%- include("partials/admin/header") %> 
+  <!-- Container -->
+  <div class="admin-container">
+    <!-- Sidebar -->
+    <%- include("partials/admin/sidebar") %>  <!-- if you have a sidebar partial -->
+
+    <!-- Main content -->
+    <main class="admin-main form-main">
+      <div class="form-container">
+      <h1>Add Category</h1>
+
+      <% if (typeof message !== "undefined" && message) { %>
+        <div class="alert"><%= message %></div>
+      <% } %>
+
+      <form action="/admin/category/add" method="POST" class="form-box">
+        <div class="form-group">
+          <label for="name">Category Name:</label>
+          <input type="text" id="name" name="name" placeholder="Enter category name" required>
+        </div>
+       <div class="btn-group">
+        <button type="submit" class="btn btn-primary">Add Category</button>
+        <a href="/admin/add-product" class="btn btn-secondary">Go to Products</a>
+        </div>
+      </form>
+      </main>
+      </div>
+
+   <%- include("partials/admin/footer") %>
+
+ 
+

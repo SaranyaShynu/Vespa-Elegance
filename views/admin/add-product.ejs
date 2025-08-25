@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Vespa Elegance</title>
+  <link rel="stylesheet" href="/css/admin.css"> <!-- link to your admin CSS -->
+</head>
+
+<body>
+  <% if (message) { %>
+    <div class="alert" id="flash-message">
+      <%= message %>
+    </div>
+    <% } %>
+      <%- include("partials/admin/header") %>
+        <!-- Container -->
+        <div class="admin-container">
+          <!-- Sidebar -->
+          <%- include("partials/admin/sidebar") %> <!-- if you have a sidebar partial -->
+
+            <main class="admin-main dashboard-main">
+              <div class="add-product-page">
+                <div class="add-product-form">
+                  <h1>Add Product</h1>
+                  <% if (message) { %>
+                    <div class="alert" id="flash-message">
+                      <%= message %>
+                    </div>
+                    <% } %>
+
+
+                      <form action="/admin/add-product/add" method="POST" enctype="multipart/form-data">
+
+                        <div class="form-group">
+                          <label for="name">Product Name</label>
+                          <input type="text" id="name" name="name" required />
+                        </div>
+
+                        <div class="form-group">
+                          <label for="price">Price</label>
+                          <input type="number" id="price" name="price" required />
+                        </div>
+
+                        <div class="form-group">
+                          <label for="category">Category</label>
+                          <select id="category" name="category" required>
+                            <option value="">-- Select Category --</option>
+                            <option value="Vespa">Vespa</option>
+                            <option value="Vespa S">Vespa S</option>
+                            <option value="Vespa Tech">Vespa Tech</option>
+                            <option value="Quala Special Edition">Quala Special Edition</option>
+                          </select>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="color">Color</label>
+                          <input type="text" id="color" name="color" required />
+                        </div>
+
+                        <div class="form-group">
+                          <label for="description">Description</label>
+                          <textarea id="description" name="description" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                          <label for="image">Product Images</label>
+                          <input type="file" id="image" name="images" multiple accept="image/*" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add Product</button>
+
+                      </form>
+                      <div class="form-footer">
+                        <a href="/admin/products" class="link-btn">Go to Product Management</a>
+                      </div>
+                </div>
+
+            </main>
+        </div>
+        <%- include("partials/admin/footer") %>
+
+          <script>
+            setTimeout(() => {
+              const flash = document.getElementById('flash-message');
+              if (flash) {
+                flash.style.transition = "opacity 0.5s ease";
+                flash.style.opacity = "0";
+                setTimeout(() => flash.remove(), 500);
+              }
+            }, 3000);
+          </script>
+</body>
+
+</html>

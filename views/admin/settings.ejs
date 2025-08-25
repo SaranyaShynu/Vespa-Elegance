@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Vespa Elegance</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/admin.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        img {
+            width: 80px;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            margin: 2px;
+        }
+
+        .btn-edit {
+            background: #9c5b9c;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <%- include("partials/admin/header") %>
+        <div class="admin-container">
+            <%- include("partials/admin/sidebar") %>
+
+                <main class="admin-main dashboard-main">
+                    <h1>Settings </h1>
+
+                    <% if (settings && settings.banners.length> 0) { %>
+                        <h2>Uploaded Banners</h2>
+                        <% settings.banners.forEach(banner=> { %>
+                            <div>
+                                <img src="<%= banner %>" width="300" />
+                                <form action="/admin/delete-banner" method="POST">
+                                    <input type="hidden" name="image" value="<%= banner %>" />
+                                    <button type="submit">Delete</button>
+                                </form>
+                            </div>
+                            <% }) %>
+                                <% } else { %>
+                                    <p>No banners uploaded yet.</p>
+                                    <% } %>
+
+                                        <hr>
+
+                                        <form action="/admin/upload-banner" method="POST" enctype="multipart/form-data">
+                                            <input type="file" name="banner" required />
+                                            <button type="submit">Upload Banner</button>
+                                        </form>
+                </main>
+        </div>
+        <%- include("partials/admin/footer") %>
+</body>
+
+</html>

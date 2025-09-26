@@ -1,27 +1,63 @@
-<h2>Order Details</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order Details</title>
+</head>
+<body>
+    <h1>Order Details</h1>
 
-<p><strong>Order ID:</strong> <%= order.orderId %></p>
-<p><strong>Date:</strong> <%= order.createdAt.toDateString() %></p>
-<p><strong>Status:</strong> <%= order.status %></p>
-<p><strong>Payment Method:</strong> <%= order.paymentMethod %></p>
-<p><strong>Payment Status:</strong> 
-  <% if (order.paymentStatus === 'Refunded') { %>
-    <span style="color:red"><%= order.paymentStatus %></span>
-  <% } else { %>
-    <%= order.paymentStatus %>
-  <% } %>
-</p>
+    <% if (order.address) { %>
+        <p><strong>Address:</strong>
+            <%= order.address.name || '' %>,
+            <%= order.address.street || '' %>,
+            <%= order.address.city || '' %>,
+            <%= order.address.state || '' %>,
+            <%= order.address.pincode || '' %>
+        </p>
+    <% } else { %>
+        <p><strong>Address:</strong> Not Provided</p>
+    <% } %>
 
-<p><strong>Address:</strong> <%= order.address %></p>
+    <p><strong>Payment Method:</strong> <%= order.paymentMethod || 'N/A' %></p>
+    <p><strong>Payment Status:</strong> <%= order.paymentStatus || 'Pending' %></p>
+    <p><strong>Order Status:</strong> <%= order.orderStatus || 'Processing' %></p>
 
-<h3>Products</h3>
-<ul>
-  <% order.products.forEach(product => { %>
-    <li>
-      <img src="/<%= product.image %>" width="80" />
-      <%= product.name %> - ₹<%= product.price %> × <%= product.quantity %>
-    </li>
-  <% }) %>
-</ul>
+    <h2>Products:</h2>
+    <% if (order.products && order.products.length > 0) { %>
+        <ul>
+            <% order.products.forEach(product => { %>
+                <li>
+                    <img src="/<%= product.productId?.image || '' %>" width="80" />
+                    <%= product.productId?.name || 'Product Not Found' %> - 
+                    ₹<%= product.productId?.price || 0 %> × <%= product.quantity %>
+                </li>
+            <% }) %>
+        </ul>
+    <% } else { %>
+        <p>No products found for this order.</p>
+    <% } %>
 
-<p><strong>Total Amount:</strong> ₹<%= order.amount %></p>
+    <p><strong>Total Price:</strong> ₹<%= order.price || 0 %></p>
+    <% if (order.discount) { %>
+        <p><strong>Discount:</strong> ₹<%= order.discount %></p>
+    <% } %>
+    <p><strong>Final Price:</strong> ₹<%= order.finalPrice || order.price || 0 %></p>
+
+    <% if (order.couponApplied) { %>
+        <p><strong>Coupon Applied:</strong> <%= order.couponApplied.code || 'N/A' %></p>
+    <% } %>
+
+    <% if (order.orderStatus !== 'Cancelled') { %>
+        <form action="/myorders/<%= order._id %>/cancel" method="POST" style="margin-top:20px;">
+            <button type="submit" style="padding:10px 20px; background:red; color:white; border:none; cursor:pointer;">
+                Cancel Order
+            </button>
+        </form>
+    <% } else { %>
+        <p style="color:red; font-weight:bold;">This order has been cancelled.</p>
+    <% } %>
+
+    <a href="/myorders" style="display:block; margin-top:20px;">Back to My Orders</a>
+</body>
+</html>

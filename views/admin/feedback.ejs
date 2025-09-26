@@ -52,12 +52,12 @@
 
 <body>
 
-    <%- include("partials/admin/header") %>
+    <%- include("../partials/admin/header") %>
         <div class="admin-container">
-            <%- include("partials/admin/sidebar") %>
+            <%- include("../partials/admin/sidebar") %>
 
                 <main class="admin-main dashboard-main">
-                   <h1>User Feedback</h1>
+                  <h1>User Feedback</h1>
 <table class="table table-bordered">
   <thead>
     <tr>
@@ -65,23 +65,35 @@
       <th>Name</th>
       <th>Email</th>
       <th>Message</th>
+      <th>Response</th>
     </tr>
   </thead>
   <tbody>
-    <% messages.forEach(msg => { %>
-      <tr>
-        <td><%= msg.name %></td>
-        <td><%= msg.email %></td>
-        <td><%= msg.message %></td>
-        <td><%= msg.createdAt.toLocaleString() %></td>
-      </tr>
-    <% }) %>
+    <% if (messages.length === 0) { %>
+      <tr><td colspan="5">No feedback found.</td></tr>
+    <% } else { %>
+      <% messages.forEach(msg => { %>
+        <tr>
+          <td><%= msg.createdAt.toLocaleString() %></td>
+          <td><%= msg.user ? msg.user.name : msg.name %></td>
+          <td><%= msg.user ? msg.user.email : msg.email %></td>
+          <td><%= msg.message %></td>
+          <td>
+            <form action="/admin/feedback/<%= msg._id %>/response" method="POST">
+              <textarea name="response" rows="2" class="form-control"><%= msg.response %></textarea>
+              <button type="submit" class="btn btn-sm btn-primary mt-1">Reply</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    <% } %>
   </tbody>
 </table>
 
+
                 </main>
         </div>
-        <%- include("partials/admin/footer") %>
+        <%- include("../partials/admin/footer") %>
 </body>
 
 </html>

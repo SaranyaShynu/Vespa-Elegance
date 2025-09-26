@@ -52,9 +52,9 @@
 
 <body>
 
-    <%- include("partials/admin/header") %>
+    <%- include("../partials/admin/header") %>
         <div class="admin-container">
-            <%- include("partials/admin/sidebar") %>
+            <%- include("../partials/admin/sidebar") %>
 
                 <main class="admin-main dashboard-main">
                     <h1>Order Details</h1>
@@ -63,10 +63,12 @@
                         <%= order.orderId %>
                     </p>
                     <p><strong>User Email:</strong>
-                        <%= order.userId?.email || 'N/A' %>
+                        <%= order.user.email || 'N/A' %>
                     </p>
-                    <p><strong>Amount:</strong> ₹<%= order.amount %>
+                    <p><strong>Amount:</strong> ₹<%= order.price %>
                     </p>
+                    <p><strong>Coupon Discount:</strong> ₹<%= order.discount || 0 %></p>
+<p><strong>Total Price:</strong> ₹<%= order.finalPrice %></p>
                     <p><strong>Payment Method:</strong>
                         <%= order.paymentMethod %>
                     </p>
@@ -80,15 +82,23 @@
                         <%= order.createdAt.toDateString() %>
                     </p>
                     <p><strong>Address:</strong>
-                        <%= order.address %>
+                          <% if (order.address) { %>
+    <%= order.address.street %>, 
+    <%= order.address.city %>, 
+    <%= order.address.state %> - <%= order.address.zip %>
+  <% } else { %>
+    N/A
+  <% } %>
                     </p>
                     <p><strong>Alt. Address:</strong>
-                        <%= order.alternativeAddress || 'N/A' %>
+                         <% if (order.alternativeAddress) { %>
+    <%= order.alternativeAddress.street %>, 
+    <%= order.alternativeAddress.city %>, 
+    <%= order.alternativeAddress.state %> - <%= order.alternativeAddress.zip %>
+  <% } else { %>
+    N/A
+  <% } %>
                     </p>
-                    <p><strong>Coupon Discount:</strong>
-                        <%= order.couponDiscount || 'None' %>
-                    </p>
-
                     <hr>
 
                     <h3>Products</h3>
@@ -96,14 +106,14 @@
                         <ul>
                             <% order.products.forEach(product=> { %>
                                 <li>
-                                    <img src="/<%= product.image %>" width="80" alt="Product Image" />
+                                    <img src="/<%= product.productId.image %>" width="80" alt="Product Image" />
                                     <p><strong>Name:</strong>
-                                        <%= product.name %>
+                                        <%= product.productId.name %>
                                     </p>
                                     <p><strong>Quantity:</strong>
                                         <%= product.quantity %>
                                     </p>
-                                    <p><strong>Price:</strong> ₹<%= product.price %>
+                                    <p><strong>Price:</strong> ₹<%= product.productId.price %>
                                     </p>
                                 </li>
                                 <hr>
@@ -112,23 +122,26 @@
                         <% } else { %>
                             <p>No products in this order.</p>
                             <% } %>
-                                <% if (order.paymentStatus !=='Refunded' ) { %>
-                                    <form action="/admin/orders/<%= order._id %>/refund" method="POST"
-                                        onsubmit="return confirm('Are you sure you want to refund this order?');">
-                                        <button type="submit"
-                                            style="background-color: red; color: white; padding: 8px 12px; border: none; cursor: pointer;">
-                                            Refund Order
-                                        </button>
-                                    </form>
-                                    <% } else { %>
-                                        <p><strong>Status:</strong> ✅ Refunded</p>
-                                        <% } %>
-
+                            <% if (
+      order.paymentMethod !== 'COD' && 
+      order.paymentStatus === 'Paid' && 
+      (order.status === 'Processing' || order.status === 'Delivered')
+) { %>
+    <form action="/admin/orders/<%= order._id %>/refund" method="POST"
+          onsubmit="return confirm('Are you sure you want to refund this order?');">
+        <button type="submit"
+            style="background-color: red; color: white; padding: 8px 12px; border: none; cursor: pointer;">
+            Refund Order
+        </button>
+    </form>
+<% } else if (order.paymentStatus === 'Refunded') { %>
+    <p><strong>Status:</strong> ✅ Refunded</p>
+<% } %>
 
                                             <a href="/admin/orders">← Back to Orders</a>
                 </main>
         </div>
-        <%- include("partials/admin/footer") %>
+        <%- include("../partials/admin/footer") %>
 </body>
 
 </html>

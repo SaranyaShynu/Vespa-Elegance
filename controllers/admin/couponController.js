@@ -3,7 +3,9 @@ const Coupon=require('../../models/couponModel')
 const getCoupon=async (req,res)=>{
     try {
         const coupons=await Coupon.find().sort({createdAt:-1})
-        res.render('admin/coupons',{coupons})
+        const error = req.query.error || null
+        const success = req.query.success || null
+        res.render('admin/coupons',{coupons,error,success})
     } catch (err) {
         console.error('Cannot get Coupon page',err.message)
         res.status(500).send('Server Error')
@@ -27,10 +29,10 @@ const addCoupon=async (req,res)=>{
             usedBy:[]
         })
         await coupon.save()
-        res.redirect('/admin/coupons')
+        res.redirect('/admin/coupons?success=Coupon added successfully')
     } catch (err) {
         console.error('Add Coupon Error',err.message)
-        res.redirect('/admin/coupons?error=server')
+        res.redirect('/admin/coupons?error=Server Error')
     }
 }
 

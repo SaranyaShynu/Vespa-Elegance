@@ -1,27 +1,39 @@
 const jwt = require("jsonwebtoken")
+const User = require("../models/userModel")
 const JWT_SECRET = process.env.JWT_SECRET
 
-function decodeJWT(req, res, next) {
-  const token = req.cookies.token
-  if (token)
-  {
+async function decodeJWT(req, res, next) {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    req.user = decoded // Store user data in req.user
-    res.locals.isLoggedIn=true
-    res.locals.name=decoded.name
+    const token = req.cookies.userToken
+    if (token) {
+      const decoded = jwt.verify(token, JWT_SECRET)
+      const user = await User.findById(decoded.userId).lean()
+
+      if (user) {
+        req.user = user
+        res.locals.user = user
+        res.locals.isLoggedIn = true
+        res.locals.welcomeMessage = user.name
+      } else {
+        req.user = null
+        res.locals.user = null
+        res.locals.isLoggedIn = false
+        res.locals.welcomeMessage = ""
+      }
+    } else {
+      req.user = null
+      res.locals.user = null
+      res.locals.isLoggedIn = false
+      res.locals.welcomeMessage = ""
+    }
   } catch (err) {
     req.user = null
-    res.locals.isLoggedIn=false
-    res.locals.name=''
+    res.locals.user = null
+    res.locals.isLoggedIn = false
+    res.locals.welcomeMessage = ""
   }
 
-}else{
-  req.user=null
-  res.locals.isLoggedIn=false
-  res.locals.name=''
-}
-next()
+  next()
 }
 
 module.exports = decodeJWT

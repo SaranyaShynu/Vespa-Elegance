@@ -14,22 +14,18 @@
   <link rel="stylesheet" href="css/jquery-ui.css">
   <link rel="stylesheet" href="css/owl.carousel.min.css">
   <link rel="stylesheet" href="css/owl.theme.default.min.css">
-
-
   <link rel="stylesheet" href="css/aos.css">
-
   <link rel="stylesheet" href="/css/style.css">
-
 </head>
 
 <body>
-
   <div class="site-wrap">
     <header class="site-navbar" role="banner">
       <div class="site-navbar-top">
         <div class="container">
           <div class="row align-items-center">
 
+            <!-- Search -->
             <div class="col-6 col-md-4 order-2 order-md-1 site-search-icon text-left">
               <form action="" class="site-block-top-search">
                 <span class="icon icon-search2"></span>
@@ -37,26 +33,56 @@
               </form>
             </div>
 
+            <!-- Logo -->
             <div class="col-12 mb-3 mb-md-0 col-md-4 order-1 order-md-2 text-center">
               <div class="site-logo">
                 <a href="index.html" class="js-logo-clone">Vespa Elegance</a>
               </div>
             </div>
 
+            <!-- Icons -->
             <div class="col-6 col-md-4 order-3 order-md-3 text-right">
               <div class="site-top-icons">
-
                 <ul>
-                  <li><a href="#"><span class="icon icon-person"></span></a></li>
-                  <li><a href="#"><span class="icon icon-heart-o"></span></a></li>
+                  <% if (isLoggedIn && user) { %>
+                    <!-- Profile Dropdown -->
+                    <li class="nav-item dropdown d-inline-block">
+                      <a href="#" class="dropdown-toggle" id="profileDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <% if (user.profilePic) { %>
+                          <img src="<%= user.profilePic %>" alt="Profile" class="rounded-circle" style="width:28px; height:28px; object-fit:cover;">
+                        <% } else { %>
+                          <span class="icon icon-person"></span>
+                        <% } %>
+                      </a>
+                      <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+                        <span class="dropdown-item-text">Welcome <%= user.name %></span>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="/profile/edit">Edit Profile</a>
+                        <a class="dropdown-item" href="/myorders">My Orders</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="/logout">Logout</a>
+                      </div>
+                    </li>
+                  <% } else { %>
+                    <li><a href="/login" class="btn btn-sm" style="background-color: #003366; color: white;">Login</a></li>
+                    <li><a href="/signUp" class="btn btn-sm" style="background-color: #003366; color: white;">Sign Up</a></li>
+                  <% } %>
+
+                  <!-- Wishlist -->
+                  <li><a href="/wishlist"><span class="icon icon-heart-o"></span></a></li>
+
+                  <!-- Cart -->
                   <li>
-                    <a href="cart.html" class="site-cart position-relative">
+                    <a href="/cart" class="site-cart position-relative">
                       <span class="icon icon-shopping_cart"></span>
-                      <span class="cart-count badge">2</span>
+                      <span id="cart-count" class="cart-count badge"></span>
                     </a>
                   </li>
-                  <li class="d-inline-block d-md-none ml-md-0"><a href="#" class="site-menu-toggle js-menu-toggle"><span
-                        class="icon-menu"></span></a></li>
+
+                  <!-- Mobile Menu Toggle -->
+                  <li class="d-inline-block d-md-none ml-md-0">
+                    <a href="#" class="site-menu-toggle js-menu-toggle"><span class="icon-menu"></span></a>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -64,45 +90,30 @@
           </div>
         </div>
       </div>
+
+      <!-- Navigation -->
       <nav class="site-navigation text-right text-md-center" role="navigation">
         <div class="container">
           <div class="d-flex align-items-center justify-content-between">
             <img src="/images/vtag.jpg" alt="Vespa" style="height: 50px; margin-right: 20px;">
 
             <ul class="site-menu js-clone-nav d-none d-md-block mb-0">
-              <li><a href="/user/home">Home</a></li>
-              <li><a href="about.html">Models</a></li>
-              <li><a href="/user/service">Services</a></li>
-              <li><a href="#">Featured</a></li>
-              <li><a href="#">Reviews</a></li>
-              <li><a href="contact.html">Contact</a></li>
-            </ul>
-            <ul class="d-flex align-items-center list-unstyled mb-0">
-              <% if (isLoggedIn) { %>
-                <li class="ml-2 text-dark blue">Welcome  <%=   welcomeMessage %>
-                </li>
-                <li class="ml-3"><a href="/logout" class="btn btn-sm" style="background-color: #003366; color: white;">Logout</a></li>
-                <% } else { %>
+  <li><strong><b><a href="/user/" style="color:#000;">Home</a></b></strong></li>
+  <li><strong><b><a href="/user/model" style="color:#000;">Models</a></b></strong></li>
+  <li><strong><b><a href="/user/service" style="color:#000;">Services</a></b></strong></li>
+  <li><strong><b><a href="#" style="color:#000;">Accessories</a></strong></b></li>
+  <li><strong><b><a href="/user/feedback" style="color:#000;">Reviews</a></strong></b></li>
+  <li><strong><b><a href="contact.html" style="color:#000;">Contact</a></b></strong></li>
+</ul>
 
-                  <li class="ml-2">
-                    <a href="/login" class="btn btn-sm" style="background-color: #003366; color: white;">Login</a>
-                  </li>
-                  <li class="ml-2">
-                    <a href="/signUp" class="btn btn-sm" style="background-color: #003366; color: white;">Sign Up</a>
-                  </li>
-
-                  <!-- <li class="ml-2"><a href="/login" class="btn btn-sm btn-outline-light">Login</a></li>
-                  <li class="ml-2"><a href="/signup" class="btn btn-sm btn-primary">Sign Up</a></li> -->
-                  <% } %>
-
-                    <!-- Mobile menu toggle (optional, for responsive view) -->
-                    <li class="d-inline-block d-md-none ml-md-0">
-                      <a href="#" class="site-menu-toggle js-menu-toggle">
-                        <span class="icon-menu"></span>
-                      </a>
-                    </li>
-            </ul>
           </div>
         </div>
       </nav>
     </header>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.6.2/js/bootstrap.min.js"></script>
+</body>
+</html>

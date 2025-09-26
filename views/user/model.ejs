@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Vespa Models - Vespa Elegance</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Mukta:300,400,700">
+  <link rel="stylesheet" href="/fonts/icomoon/style.css">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/magnific-popup.css">
+  <link rel="stylesheet" href="/css/jquery-ui.css">
+  <link rel="stylesheet" href="/css/owl.carousel.min.css">
+  <link rel="stylesheet" href="/css/owl.theme.default.min.css">
+  <link rel="stylesheet" href="/css/aos.css">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .model-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .model-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .model-image {
+      width: 100%;
+      aspect-ratio: 4/3;
+      overflow: hidden;
+    }
+
+    .model-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .model-info {
+      padding: 16px;
+      flex: 1;
+    }
+
+    .model-title {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .color-dot {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-right: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+    }
+
+    .rating-stars {
+      color: #ffc107;
+      font-size: 1rem;
+    }
+
+    .wishlist-btn i {
+      font-size: 1.2rem;
+      color: #554e4e;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+
+    .wishlist-btn.active i {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="site-wrap">
+    <%- include("../partials/user/header") %>
+
+    <!-- Breadcrumb -->
+    <div class="bg-light py-3">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12 mb-0">
+            <a href="/">Home</a>
+            <span class="mx-2 mb-0">/</span>
+            <strong class="text-black">Models</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vespa Models -->
+    <div class="site-section">
+      <div class="container">
+        <div class="row mb-5">
+          <div class="col-md-12 text-center">
+            <h2 class="text-black h4">Explore Vespa Models</h2>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="row mb-4">
+          <div class="col-md-12 text-center">
+            <form method="GET" action="/model" class="form-inline justify-content-center gap-2">
+              <select name="category" onchange="this.form.submit()" class="form-control w-auto d-inline-block mx-2">
+                <option value="">All Categories</option>
+                <option value="Vespa" <%=(query.category==="Vespa" ) ? "selected" : "" %>>Vespa</option>
+                <option value="Vespa S" <%=(query.category==="Vespa S" ) ? "selected" : "" %>>Vespa S</option>
+                <option value="Vespa Tech" <%=(query.category==="Vespa Tech" ) ? "selected" : "" %>>Vespa Tech</option>
+                <option value="Special Editions" <%=(query.category==="Special Editions" ) ? "selected" : "" %>>Special Editions</option>
+              </select>
+
+              <select name="subCategory" onchange="this.form.submit()" class="form-control w-auto d-inline-block">
+                <option value="">All Engines</option>
+                <option value="125cc" <%=(query.subCategory==="125cc" ) ? "selected" : "" %>>125cc</option>
+                <option value="150cc" <%=(query.subCategory==="150cc" ) ? "selected" : "" %>>150cc</option>
+                <option value="Electric" <%=(query.subCategory==="Electric" ) ? "selected" : "" %>>Electric</option>
+              </select>
+
+              <a href="/model" class="btn btn-secondary mx-2">Reset</a>
+            </form>
+          </div>
+        </div>
+
+        <!-- Model Cards -->
+        <div class="row">
+          <% if (models.length>0) { %>
+            <% models.forEach(function(model){ %>
+              <div class="col-sm-6 col-lg-4 mb-4" data-aos="fade-up">
+                <div class="model-card shadow-sm rounded">
+                  <figure class="model-image">
+                    <% if (model.images && model.images.length>0) { %>
+                      <div class="owl-carousel owl-theme model-carousel">
+                        <% model.images.forEach(function(img){ %>
+                          <div class="item">
+                            <img src="/images/<%= img %>" alt="<%= model.name %>">
+                          </div>
+                        <% }) %>
+                      </div>
+                    <% } else { %>
+                      <div style="width:100%; height:240px; display:flex; align-items:center; justify-content:center; background:#f0f0f0; color:#888;">
+                        No Image Available
+                      </div>
+                    <% } %>
+                  </figure>
+
+                  <div class="model-info">
+                    <h3 class="model-title">
+                      <a href="/models/<%= model.id %>"><%= model.name %></a>
+                    </h3>
+                    <p class="mb-1 text-muted"><strong>Category:</strong> <%= model.category %></p>
+                    <p class="mb-1 text-muted"><strong>Engine:</strong> <%= model.subCategory %></p>
+
+                    <!-- Ratings -->
+                    <p class="mb-2">
+                      <% if (model.averageRating>0) { %>
+                        <span class="rating-stars">
+                          <% for (var i=1; i<=5; i++) { %>
+                            <% if (i<=Math.round(model.averageRating)) { %>★<% } else { %>☆<% } %>
+                          <% } %>
+                        </span>
+                        <small>(<%= model.ratings.length %> reviews)</small>
+                      <% } else { %>
+                        <small class="text-muted">No ratings yet</small>
+                      <% } %>
+                    </p>
+
+                    <p class="text-primary font-weight-bold">₹ <%= model.price %></p>
+
+                    <!-- Color Options -->
+                    <div class="mb-3">
+                      <% if (model.colors && model.colors.length) { %>
+                        <% model.colors.forEach(function(c){ %>
+                          <span class="color-dot" style="background-color:<%= c %>;"></span>
+                        <% }) %>
+                      <% } %>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-center align-items-center" style="gap:8px;">
+                      <a href="/model/<%= model._id %>" class="btn btn-primary btn-sm">View Details</a>
+
+                      <button
+                        type="button"
+                        class="btn wishlist-btn btn-sm p-0 border-0 <% if (locals.isLoggedIn && wishlist.includes(model._id.toString())) { %>active<% } %>"
+                        data-model-id="<%= model._id %>"
+                         data-loggedin="<%= locals.isLoggedIn ? 'true' : 'false' %>">
+                        <i class="icon-heart"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <div class="col-12 text-center">
+              <p class="text-muted">No models found for the selected filters.</p>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <%- include("../partials/user/footer") %>
+  </div>
+
+  <script src="/js/jquery-3.3.1.min.js"></script>
+  <script src="/js/jquery-ui.js"></script>
+  <script src="/js/popper.min.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <script src="/js/owl.carousel.min.js"></script>
+  <script src="/js/jquery.magnific-popup.min.js"></script>
+  <script src="/js/aos.js"></script>
+  <script src="/js/main.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $('.model-carousel').each(function () {
+        $(this).owlCarousel({
+          items: 1,
+          loop: true,
+          nav: true,
+          dots: true,
+          autoplayTimeout: 3000,
+          autoplayHoverPause: true
+        });
+      });
+    });
+  </script>
+
+  <!-- Wishlist Toggle JS -->
+  <script>
+    <% if (locals.isLoggedIn) { %>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.wishlist-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          e.preventDefault();
+
+          const modelId = button.dataset.modelId;
+
+          try {
+            const res = await fetch(`/wishlist/toggle/${modelId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+              button.classList.toggle('active', data.action === 'added');
+            } else {
+              console.error(data.message);
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        });
+      });
+    });
+    <% } %>
+  </script>
+</body>
+
+</html>

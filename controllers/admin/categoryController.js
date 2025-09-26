@@ -18,8 +18,8 @@ const addCategory=async (req,res)=>{
             const existing=await Category.findOne({name:name.trim()})
         if(existing) return res.render('admin/category',{message:'Already Exists'})
                 
-
-           const category=new Category({name:name.trim()})
+           const subcategories = req.body.subcategories.split(",")
+           const category=new Category({name:name.trim(),subCategories})
            await category.save()
            return  res.redirect('/admin/products')
     } catch(err){

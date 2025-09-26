@@ -3,15 +3,16 @@ const User=require('../models/userModel')
 
 const userAuth=async (req,res,next)=>{
     try{
-        const token=req.cookies.token
+        const token=req.cookies.userToken
     if(!token){
         return res.redirect('/login')
     }
     const decoded=jwt.verify(token,process.env.JWT_SECRET)
-        const user=await User.findById(decoded.userId)
+        const user=await User.findById(decoded.userId).lean()
         
         if(user && !user.block){
             req.user=user
+
             return next()
         }else{
         return res.redirect('/login')
@@ -25,12 +26,11 @@ const userAuth=async (req,res,next)=>{
 
 const adminAuth=async (req,res,next)=>{
     try{
-        const token=req.cookies?.token
+        const token=req.cookies.adminToken
         if(!token){
             return res.redirect('/admin/login')
         }
         const decoded=jwt.verify(token,process.env.JWT_SECRET)
-      //  const admin=await User.findById(decoded.userId)
         if(decoded.isAdmin){
             req.admin=decoded
             return next()
@@ -39,7 +39,7 @@ const adminAuth=async (req,res,next)=>{
     }
 }catch(err){
             console.error('Error in admin auth middleware',err.message)
-            res.clearCookie('token')
+            res.clearCookie('adminToken')
             return res.redirect('/admin/login')
         }
 }

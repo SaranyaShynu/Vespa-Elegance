@@ -5,7 +5,8 @@ const couponSchema = new mongoose.Schema({
         type: String,
         required: true,
         uppercase: true,
-        unique: true
+        unique: true,
+        trim:true
     },
     createdAt: {
         type: Date,
@@ -22,18 +23,26 @@ const couponSchema = new mongoose.Schema({
     },
     discountValue: {
         type: Number,
-        required: true
+        required: true,
+        min:1
     },
     active: {
         type: Boolean,
         default: true
     },
-    usedBy: {
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: "User",
-        default: []
-    }
+    usedBy: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+maxUses: {
+  type: Number,
+  default: null // null = unlimited
+},
+usageCount: {
+  type: Number,
+  default: 0
+}
 
-})
+},{timestamps:true})
 
 module.exports = mongoose.model('Coupon', couponSchema)

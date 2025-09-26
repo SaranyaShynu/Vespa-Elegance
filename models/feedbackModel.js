@@ -12,9 +12,8 @@ const feedbackSchema=new mongoose.Schema({
         type:String,
         required:true
     },
-    createdAt:{
-        type:Date,
-        default:Date.now}
-})
+    response: { type: String, default: "" },
+   
+}, {timestamps:true})
 
 module.exports=mongoose.model('Feedback',feedbackSchema)

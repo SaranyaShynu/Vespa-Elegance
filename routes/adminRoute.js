@@ -7,6 +7,8 @@ const productController=require('../controllers/admin/productController')
 const orderController=require('../controllers/admin/orderController')
 const couponController=require('../controllers/admin/couponController')
 const feedbackController = require('../controllers/admin/feedbackController')
+const chatController = require('../controllers/chatController')
+const messageController=require('../controllers/admin/messageController')
 const {userAuth,adminAuth}=require('../middlewares/auth')
 const bannerController=require('../controllers/admin/bannerController')
 const upload=require('../middlewares/multer')
@@ -19,7 +21,7 @@ router.get('/add-product',productController.loadProduct)
 router.post('/add-product/add',upload.array('images',5),productController.addProduct)
 
 router.get('/products',productController.getProduct)
-router.post('/products/edit/:id',upload.none(),productController.editProduct)
+router.post('/products/edit/:id',upload.array('images',5),productController.editProduct)
 router.post('/products/delete/:id',productController.deleteProduct)
 
 router.get('/pageError',adminController.pageError)
@@ -46,6 +48,9 @@ router.post('/coupons/add',adminAuth,couponController.addCoupon)
 router.get('/coupons/delete/:id',adminAuth,couponController.deleteCoupon)
 
 router.get('/feedback',adminAuth,feedbackController.getFeedback)
+router.post('/feedback/:id/response',adminAuth,feedbackController.respondFeedback)
+router.get('/chat/:userId',adminAuth,chatController.loadAdminChat)
+router.get('/chat/history/:roomId',adminAuth,messageController.getChatHistory)
 
 router.get('/service',adminController.loadService)
 

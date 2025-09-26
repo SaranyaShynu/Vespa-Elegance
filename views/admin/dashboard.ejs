@@ -7,7 +7,7 @@
 <div class="admin-container">
   
   <!-- Sidebar -->
-  <%- include('../partials/admin/sidebar') %>
+  <%- include('../partials/admin/sidebar') %> 
 
   <!-- Main Content -->
   <main class="admin-main dashboard-main">
@@ -45,5 +45,20 @@
         tension: 0.3
       }]
     }
+  });
+</script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  socket.emit('joinAdmin');
+
+  socket.on('updateOnlineUsers', (userIds) => {
+    const ul = document.getElementById('onlineUsersList');
+    ul.innerHTML = '';
+    userIds.forEach(id => {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="/admin/chat/${id}">User: ${id}</a>`;
+      ul.appendChild(li);
+    });
   });
 </script>

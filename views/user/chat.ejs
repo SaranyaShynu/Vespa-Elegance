@@ -6,52 +6,68 @@
   <script src="/socket.io/socket.io.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; }
-    #messages { list-style-type: none; padding: 0; }
+    #messages { list-style-type: none; padding: 0; max-height: 400px; overflow-y: auto; }
     #messages li { padding: 8px 10px; margin-bottom: 4px; background: #f1f1f1; border-radius: 4px; }
+    form { display: flex; margin-top: 10px; }
+    input { flex: 1; padding: 8px; }
+    button { padding: 8px 12px; margin-left: 5px; }
   </style>
 </head>
 <body>
   <h2>Live Chat</h2>
   <ul id="messages"></ul>
+
   <form id="form">
-    <input id="input" autocomplete="off" /><button>Send</button>
+    <input id="messageInput" placeholder="Type your message" autocomplete="off" />
+    <button type="submit">Send</button>
   </form>
 
   <script>
     const socket = io();
 
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
+    const input = document.getElementById('messageInput');
     const messages = document.getElementById('messages');
+    const form = document.getElementById('form');
 
+    <% if (user) { %>
+      const roomId = "<%= user._id %>";
+      const sender = "<%= user._id %>";
+      const senderName = "<%= user.name %>";
+    <% } else { %>
+      alert("User not found! Cannot start chat.");
+    <% } %>
+
+    // Join user room
+    if (roomId && sender) {
+      socket.emit('joinRoom', roomId);
+      console.log('Joined room:', roomId, 'as sender:', sender);
+    }
+
+    // Send message (on Enter or button)
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', input.value);
-        input.value = '';
-      }
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      socket.emit('chat message', {
+        roomId,
+        sender:senderId,
+        senderName:userName,
+        content: message,
+        isFromAdmin: false
+      });
+
+      input.value = '';
     });
 
+    // Receive messages
     socket.on('chat message', (msg) => {
       const li = document.createElement('li');
-      li.textContent = msg;
+      const name = msg.isFromAdmin ? "Admin" : msg.senderName;
+      li.textContent = `${msg.senderName}: ${msg.content}`;
       messages.appendChild(li);
-      window.scrollTo(0, document.body.scrollHeight);
+      messages.scrollTop = messages.scrollHeight;
     });
   </script>
-
-  const userId = '<%= user._id %>'; // Inject from server-side if user is logged in
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-  if (input.value) {
-    socket.emit('chat message', {
-      userId,
-      content: input.value
-    });
-    input.value = '';
-  }
-});
-
 </body>
 </html>

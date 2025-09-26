@@ -1,24 +1,197 @@
-<h4>Have a Coupon?</h4>
+<!--<div class="container mt-4">
+  <h2>Your Cart</h2>
 
-<form action="/apply-coupon" method="POST">
-  <input type="text" name="couponCode" placeholder="Enter coupon" required>
-  <button type="submit" class="btn btn-primary">Apply</button>
-</form>
+  <% if (cart && cart.items.length > 0) { %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% cart.items.forEach(item => { %>
+          <tr>
+            <td><%= item.productId.name %></td>
+            <td>₹ <%= item.price %></td>
+            <td><%= item.status %></td>
+            <td>
+              <a href="/cart/remove/<%= item.productId._id %>" class="btn btn-danger btn-sm">Remove</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
 
-<% if (couponApplied) { %>
-  <div class="alert alert-success">
-    Coupon "<%= couponApplied.code %>" applied!
-  </div>
+    <h4>
+      Total: ₹ 
+      <%= cart.items.reduce((sum, item) => sum + item.price, 0) %>
+    </h4>
+
+    <a href="/checkout" class="btn btn-success">Checkout</a>
+
+  <% } else { %>
+    <p>Your cart is empty.</p>
+  <% } %>
+</div>   -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Vespa Models - Vespa Elegance</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Mukta:300,400,700">
+  <link rel="stylesheet" href="/fonts/icomoon/style.css">
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/magnific-popup.css">
+  <link rel="stylesheet" href="/css/jquery-ui.css">
+  <link rel="stylesheet" href="/css/owl.carousel.min.css">
+  <link rel="stylesheet" href="/css/owl.theme.default.min.css">
+  <link rel="stylesheet" href="/css/aos.css">
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .model-card {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      height: 100%;
+       display: flex;
+  flex-direction: column;
+    }
+    .model-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+
+    .model-image {
+  width: 100%;
+  height: 240px;            /* fixed height for all */
+  overflow: hidden;         /* prevent image spill */
+}
+    .model-image img {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+       object-position: center;
+      object-fit: cover;
+      display:block;
+      
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .model-info {
+      padding: 16px;
+      flex: 1;
+      
+    }
+    .model-title {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .color-dot {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-right: 5px;
+      border: 1px solid #ddd;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="site-wrap">
+    <%- include("../partials/user/header") %>
+
+<% if (cart.items && cart.items.length > 0) { %>
+  <form action="/cart/update" method="POST">
+  
+
+    <table class="table table-bordered text-center align-middle">
+      <thead class="thead-light">
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Quantity</th>
+          <th>Total</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+    <tbody>
+  <% cart.items.forEach(item => { %>
+    <tr data-price="<%= item.price %>">
+      <td><%= item.productId.name %></td>
+      <td>₹ <%= item.price %></td>
+      <td>
+        <input type="number" name="quantities[<%= item.productId._id %>]" 
+               value="<%= item.quantity %>" min="1" class="form-control w-50 mx-auto">
+      </td>
+      <td class="subtotal">₹ <%= item.price * item.quantity %></td>
+      <td>
+        <a href="/cart/remove/<%= item.productId._id %>" class="btn btn-danger btn-sm">Remove</a>
+      </td>
+    </tr>
+  <% }) %>
+</tbody>
+</table>
+<h4>
+  Total: <span id="cart-total">₹ 0</span>
+</h4>
+
+
+    <button type="submit" class="btn btn-primary">Update Cart</button>
+    <a href="/checkout" class="btn btn-success">Proceed to Checkout</a>
+  </form>
+<% } else { %>
+  <p>Your cart is empty.</p>
 <% } %>
 
+  <%- include("../partials/user/footer") %>
+  </div>
 
-<form action="/place-order" method="POST">
-  <!-- other form fields -->
+  <script src="/js/jquery-3.3.1.min.js"></script>
+  <script src="/js/jquery-ui.js"></script>
+  <script src="/js/popper.min.js"></script>
+  <script src="/js/bootstrap.min.js"></script>
+  <script src="/js/owl.carousel.min.js"></script>
+  <script src="/js/jquery.magnific-popup.min.js"></script>
+  <script src="/js/aos.js"></script>
+  <script src="/js/main.js"></script>
 
-  <% if (appliedCoupon) { %>
-    <input type="hidden" name="couponCode" value="<%= couponApplied.code %>">
-  <% } %>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const qtyInputs = document.querySelectorAll("input[name^='quantities']");
+    const totalEl = document.getElementById("cart-total");
 
-  <button type="submit" class="btn btn-success">Place Order</button>
-</form>
+    function updateTotal() {
+      let total = 0;
+      document.querySelectorAll("tr[data-price]").forEach(row => {
+        const price = parseFloat(row.dataset.price);
+        const qty = parseInt(row.querySelector("input[name^='quantities']").value) || 1;
+        const subtotal = price * qty;
 
+        row.querySelector(".subtotal").innerText = "₹ " + subtotal.toFixed(2);
+        total += subtotal;
+      });
+      totalEl.innerText = "₹ " + total.toFixed(2);
+    }
+
+    qtyInputs.forEach(input => {
+      input.addEventListener("input", updateTotal);
+    });
+
+    updateTotal(); // run on page load
+  });
+</script>
+
+</body>
+</html>

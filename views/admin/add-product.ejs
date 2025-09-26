@@ -13,11 +13,11 @@
       <%= message %>
     </div>
     <% } %>
-      <%- include("partials/admin/header") %>
+      <%- include("../partials/admin/header") %>
         <!-- Container -->
         <div class="admin-container">
           <!-- Sidebar -->
-          <%- include("partials/admin/sidebar") %> <!-- if you have a sidebar partial -->
+          <%- include("../partials/admin/sidebar") %> <!-- if you have a sidebar partial -->
 
             <main class="admin-main dashboard-main">
               <div class="add-product-page">
@@ -49,36 +49,51 @@
                             <option value="Vespa">Vespa</option>
                             <option value="Vespa S">Vespa S</option>
                             <option value="Vespa Tech">Vespa Tech</option>
-                            <option value="Quala Special Edition">Quala Special Edition</option>
+                            <option value="Special Editions">Special Editions</option>
+                          </select>
+                        </div>
+
+                         <div class="form-group">
+                          <label for="subCategory"> Engine Type</label>
+                          <select id="subCategory" name="subCategory" required>
+                            <option value="">-- Select Engine --</option>
+                            <option value="125">125 cc</option>
+                            <option value="150">150 cc</option>
+                            <option value="Electric">Electric</option>
                           </select>
                         </div>
 
                         <div class="form-group">
-                          <label for="color">Color</label>
-                          <input type="text" id="color" name="color" required />
+                          <label for="colors">Colors</label>
+                          <div id="color-wrapper">
+                            <input type="text" name="colors[]" placeholder="Enter a color" required />
+                          </div>
+                          <button type="button" onclick="addColorField()" class="btn btn-secondary"
+                            style="margin-top: 5px;">+ Add Another Color</button>
                         </div>
+                
 
-                        <div class="form-group">
-                          <label for="description">Description</label>
-                          <textarea id="description" name="description" required></textarea>
-                        </div>
-
-                        <div class="form-group">
-                          <label for="image">Product Images</label>
-                          <input type="file" id="image" name="images" multiple accept="image/*" />
-                        </div>
-
-                        <button type="submit" class="btn btn-primary">Add Product</button>
-
-                      </form>
-                      <div class="form-footer">
-                        <a href="/admin/products" class="link-btn">Go to Product Management</a>
-                      </div>
+                <div class="form-group">
+                  <label for="description">Description</label>
+                  <textarea id="description" name="description" required></textarea>
                 </div>
+
+                <div class="form-group">
+                  <label for="image">Product Images</label>
+                  <input type="file" id="image" name="images" multiple accept="image/*" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Product</button>
+
+                </form>
+                <div class="form-footer">
+                  <a href="/admin/products" class="link-btn">Go to Product Management</a>
+                </div>
+              </div>
 
             </main>
         </div>
-        <%- include("partials/admin/footer") %>
+        <%- include("../partials/admin/footer") %>
 
           <script>
             setTimeout(() => {
@@ -89,6 +104,17 @@
                 setTimeout(() => flash.remove(), 500);
               }
             }, 3000);
+          </script>
+          <script>
+            function addColorField() {
+              const wrapper = document.getElementById('color-wrapper');
+              const input = document.createElement('input');
+              input.type = 'text';
+              input.name = 'colors[]';   // sends as array
+              input.placeholder = 'Enter a color';
+              input.required = true;
+              wrapper.appendChild(input);
+            }
           </script>
 </body>
 

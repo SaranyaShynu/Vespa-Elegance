@@ -6,13 +6,14 @@ const loadProduct = (req, res) => {
   
 const addProduct=async (req,res)=>{
     try{
-        const{name,category,price,color,description} = req.body
+        const{name,category,subCategory,price,color,description} = req.body
 
         const imagePath=req.files.map(file=>file.filename)
 
         const product=new Product({
             name,
             category,
+            subCategory,
             price,
             color,
             description,
@@ -41,7 +42,7 @@ const getProduct=async (req,res)=>{
 
 const editProduct=async (req,res)=>{
     try {
-        const {name,price,color,description}=req.body
+        const {name,price,color,description,subCategory}=req.body
         const product=await Product.findById(req.params.id)
         if(!product){
             return res.status(404).send('Product not found')
@@ -50,6 +51,17 @@ const editProduct=async (req,res)=>{
         product.price=price
         product.color=color
         product.description=description
+        product.subCategory = subCategory || product.subCategory
+
+          // 🔹 Handle existing images
+    let remainingImages = []
+    if (req.body.existingImages) {
+      remainingImages = JSON.parse(req.body.existingImages)
+    }
+    product.images = remainingImages
+        if (req.files && req.files.length > 0) {
+    product.images = [...remainingImages,...req.files.map(file=>file.filename)]
+}
 
         await product.save()
         res.redirect('/admin/products')

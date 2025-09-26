@@ -343,3 +343,17 @@ body {
   color: #155724;
   border: 1px solid #c3e6cb;
 }
+
+#color-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* space between inputs */
+  margin-bottom: 10px;
+}
+
+#color-wrapper input {
+  width: 100%;       /* take full form width */
+  padding: 8px;
+  box-sizing: border-box;
+}
+

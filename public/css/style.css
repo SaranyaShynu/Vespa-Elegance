@@ -3,7 +3,8 @@ body {
   line-height: 1.7;
   color: #8c92a0;
   font-weight: 300;
-  font-size: 16px; }
+  font-size: 16px; 
+ overflow-x: hidden; }
 
 ::-moz-selection {
   background: #000;
@@ -448,7 +449,7 @@ a {
 .site-blocks-cover {
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center center; }
+  background-position: center; } 
   .site-blocks-cover, .site-blocks-cover .row {
     min-height: 600px;
     height: calc(100vh - 174px); }
@@ -460,11 +461,11 @@ a {
       .site-blocks-cover h1 {
         font-size: 50px; } }
   .site-blocks-cover p {
-    color: #333333;
-    font-size: 20px;
+    color: #0d0124;
+    font-size: 25px;
     line-height: 35px; }
   .site-blocks-cover .intro-text {
-    font-size: 16px;
+    font-size: 20px;
     line-height: 1.5; }
 
 .site-blocks-1 {
@@ -585,7 +586,8 @@ a {
   .block-5 ul li:before {
     top: 0;
     font-family: "icomoon";
-    content: "";
+    content: ""
+    ;
     position: absolute;
     left: 0;
     font-size: 20px;
@@ -779,18 +781,61 @@ table th, table td {
   width: 100%;
   height: 100%;
 }
-
+/*
 .block-2-item .image {
   width: 100%;
-  height: 350px; /* or your preferred height */
+  height: 350px; /* or your preferred height 
   overflow: hidden;
+   display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .block-2-item .image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+   display: block;
+}     */
+
+.block-2-item .image {
+  position: relative;
+  overflow: hidden;
+  height: 350px;
 }
+
+.block-2-item .image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.block-2-item:hover .image img {
+  transform: scale(1.1); /* Zoom effect */
+}
+
+.banner-content {
+  max-width: 600px; /* control width of text block */
+  margin-left: 5%;  /* push a little inside from left */
+  color: #fff;
+}
+
+.banner-slide {
+  height: 100vh; /* full screen height */
+   width: 100%;                 /* No overflow */
+  overflow: hidden; 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.carousel-inner img {
+  max-height: 450px;  
+  object-fit: cover;   /* Crop instead of stretching */
+  border-radius: 10px; /* Optional: rounded look */
+}
+
+
 
 

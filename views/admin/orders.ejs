@@ -52,9 +52,9 @@
 
 <body>
 
-    <%- include("partials/admin/header") %>
+    <%- include("../partials/admin/header") %>
         <div class="admin-container">
-            <%- include("partials/admin/sidebar") %>
+            <%- include("../partials/admin/sidebar") %>
 
                 <main class="admin-main dashboard-main">
                     <h1>All Orders</h1>
@@ -80,7 +80,7 @@
                                             <%= order.orderId %>
                                         </td>
                                         <td>
-                                            <%= order.userId?.email || 'N/A' %>
+                                            <%= order.user?.email || 'N/A' %>
                                         </td>
                                         <td>₹<%= order.amount %>
                                         </td>
@@ -93,12 +93,10 @@
                                         <td>
                                             <form action="/admin/orders/<%= order._id %>/status" method="POST">
                                                 <select name="status">
-                                                    <option value="Processing" <%=order.status==='Processing'
-                                                        ? 'selected' : '' %>>Processing</option>
-                                                    <option value="Delivered" <%=order.status==='Delivered' ? 'selected'
-                                                        : '' %>>Delivered</option>
-                                                         <option value="Refunded" <%=order.status==='Refunded' ? 'selected'
-                                                        : '' %>>Refunded</option>
+                                                    <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+    <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+    <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+    <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
                                                 </select>
                                                 <button type="submit">Update</button>
                                             </form>
@@ -125,7 +123,7 @@
                     </table>
                 </main>
         </div>
-        <%- include("partials/admin/footer") %>
+        <%- include("../partials/admin/footer") %>
 </body>
 
 </html>

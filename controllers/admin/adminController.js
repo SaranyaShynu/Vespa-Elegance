@@ -15,7 +15,7 @@ const pageError=async (req,res)=>{
 
 const loadLogin = async (req, res) => {
     try {
-        const token = req.cookies.token
+        const token = req.cookies.adminToken
         if (token) {
             const decoded = jwt.verify(token, process.env.JWT_SECRET)
             if (decoded && decoded.isAdmin) {
@@ -50,21 +50,16 @@ const login = async (req, res) => {
 
     // sign JWT
     const token = jwt.sign(
-      { userId: admin._id, name: admin.name, email: admin.email, isAdmin: true},
+      { userId: admin._id, name: admin.name, email: admin.email, isAdmin: true,role:'admin'},
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     )
 
     // set cookies
-    res.cookie("token", token, {
+    res.cookie("adminToken", token, {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
     });
-
-   /* res.cookie("welcome_message", `Welcome Admin ${admin.name}`, {
-      httpOnly: false,
-      maxAge: 24 * 60 * 60 * 1000,
-    });  */
 
     return res.redirect("/admin/dashboard")
   } catch (error) {
@@ -154,7 +149,7 @@ const loadDashboard= async (req,res)=>{
 
 const logout= async (req,res)=>{
   try{
-       res.clearCookie('token')
+       res.clearCookie('adminToken')
        res.clearCookie('welcome_message')
 
        return res.redirect('/admin/login')

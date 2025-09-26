@@ -11,6 +11,16 @@ const userSchema=new mongoose.Schema({
         type:String,
         required:false,
     },
+     addresses: [
+        {
+            street: String,
+            city: String,
+            state: String,
+            country: String,
+            zip: String,
+            phone: String
+        }
+    ],
     mobileno:{
         type:String,
         required:false,
@@ -54,6 +64,11 @@ const userSchema=new mongoose.Schema({
         type:String,
       //  required :true
     },
+     referredBy: {              
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null
+    },
     redeemed:{
         type:Boolean,
        // default:false
@@ -75,7 +90,7 @@ const userSchema=new mongoose.Schema({
     }],
     profilePic:{type:String},
     resetOtp: Number,
-    otpExpires: Date
+    resetOtpExpires: Date
 
 },{timestamps:true})
 

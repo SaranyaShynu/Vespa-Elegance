@@ -2,41 +2,86 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Live Chat</title>
+  <title>Admin Chat</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     body { font-family: Arial; padding: 20px; }
-    #messages { list-style-type: none; padding: 0; }
-    #messages li { padding: 8px 10px; margin-bottom: 4px; background: #f1f1f1; border-radius: 4px; }
+    #users { margin-bottom: 20px; }
+    #messages { list-style-type: none; padding: 0; height: 300px; overflow-y: auto; border: 1px solid #ccc; margin-bottom: 10px; }
+    #messages li { padding: 6px 10px; margin: 4px; border-radius: 4px; }
+    .admin { background: #d1e7dd; text-align: right; }
+    .user { background: #f8d7da; text-align: left; }
   </style>
 </head>
 <body>
-  <h2>Live Chat</h2>
+  <h2>Admin Chat</h2>
+
+  <div id="users">
+    <strong>Online Users:</strong>
+    <ul id="userList"></ul>
+  </div>
+
   <ul id="messages"></ul>
-  <form id="form">
-    <input id="input" autocomplete="off" /><button>Send</button>
-  </form>
+
+  <input id="messageInput" placeholder="Type message" />
+  <button id="sendBtn" type="button">Send</button>
 
   <script>
     const socket = io();
-
-    const form = document.getElementById('form');
-    const input = document.getElementById('input');
+    const userList = document.getElementById('userList');
     const messages = document.getElementById('messages');
+    const input = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
 
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      if (input.value) {
-        socket.emit('chat message', input.value);
-        input.value = '';
-      }
+    let currentRoom = null;
+
+    // ✅ Join admin room
+    socket.emit('joinAdminRoomForUser', userId);
+
+    // ✅ Update user list when new users online
+    socket.on('updateOnlineUsers', (users) => {
+      userList.innerHTML = "";
+      users.forEach(userId => {
+        const li = document.createElement('li');
+        li.textContent = userId;
+        li.style.cursor = "pointer";
+        li.onclick = () => {
+          currentRoom = userId;
+          messages.innerHTML = "";
+          socket.emit('joinAdminRoomForUser', userId);
+          console.log("Switched to user room:", userId);
+        };
+        userList.appendChild(li);
+      });
     });
 
+    // ✅ Send message
+    sendBtn.addEventListener('click', () => {
+      if (!currentRoom) {
+        alert("Select a user first!");
+        return;
+      }
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      socket.emit('chat message', {
+        roomId,
+        sender: "admin",
+        senderName: "Admin",
+        content: msg,
+        isFromAdmin: true
+      });
+
+      input.value = '';
+    });
+
+    // ✅ Receive messages
     socket.on('chat message', (msg) => {
       const li = document.createElement('li');
-      li.textContent = msg;
+      li.className = msg.isFromAdmin ? "admin" : "user";
+      li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;
       messages.appendChild(li);
-      window.scrollTo(0, document.body.scrollHeight);
+      messages.scrollTop = messages.scrollHeight;
     });
   </script>
 </body>

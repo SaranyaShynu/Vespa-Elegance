@@ -18,7 +18,7 @@ address:[{
         type:String,
         required:true
     },
-    landMark:{
+    street:{
         type:String,
         required:true
     },
@@ -26,7 +26,7 @@ address:[{
         type:String,
         required:true
     },
-    pinCode:{
+    zip:{
         type:Number,
         required:true
     },

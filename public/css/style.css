@@ -136,7 +136,7 @@ a {
 .site-navbar {
   background: #fff;
   margin-bottom: 0px;
-  z-index: 1999;
+  z-index: 1995;
   position: relative; }
   .site-navbar.transparent {
     background: transparent; }
@@ -836,6 +836,23 @@ table th, table td {
   border-radius: 10px; /* Optional: rounded look */
 }
 
+.banner-slide1 {
+  height: 120vh; /* full screen height */
+   width: 100%;                 /* No overflow */
+  overflow: hidden; 
+  background-size: cover;
+  background-position:right;
+  background-repeat: no-repeat;
+}
+
+.banner-slide2 {
+  height: 100vh; /* full screen height */
+   width: 100%;                 /* No overflow */
+  overflow: hidden; 
+  background-size: cover;
+  background-position:center;
+  background-repeat: no-repeat;
+}
 
 
 

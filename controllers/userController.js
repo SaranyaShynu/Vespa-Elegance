@@ -418,7 +418,10 @@ const getOrders = async (req, res) => {
       .populate('couponApplied')
       .sort({ createdAt: -1 })
 
-    res.render('user/myorders', { orders, user: req.session.user, isLoggedIn: true })
+    const message = req.query.message || null
+    const type = req.query.type || null
+
+    res.render('user/myorders', { orders, user: req.session.user, isLoggedIn: true, message, type })
   } catch (err) {
     console.error("Error fetching orders", err)
     res.status(500).send('Failed to fetch Orders')
@@ -932,11 +935,11 @@ const cancelOrder = async (req, res) => {
     const order = await Order.findOne({ _id: orderId, user: userId })
 
     if (!order) {
-      return res.redirect('/view-orders?message=Order not found&type=error')
+      return res.redirect('/myorders?message=Order not found&type=error')
     }
 
     if (order.orderStatus === 'Cancelled') {
-      return res.redirect('/view-orders?message=Order is already cancelled&type=info')
+      return res.redirect('/myorders?message=Order is already cancelled&type=info')
     }
 
     // If the order was paid via online method, refund via Stripe
@@ -945,23 +948,52 @@ const cancelOrder = async (req, res) => {
 
       if (!session.payment_intent) {
         console.error('missing payment_intent in stripe session')
-        return res.redirect('/view-orders?message=Unable to refund. Contact support&type=error')
+        return res.redirect('/myorders?message=Unable to refund. Contact support&type=error')
       }
 
       // Issue refund
       await stripe.refunds.create({
         payment_intent: session.payment_intent,
       })
-      order.paymentStatus = 'Refunded'
+     // order.paymentStatus = 'Refunded'
     }
 
-    order.orderStatus = 'Cancelled'
-    await order.save()
+    await Order.findByIdAndUpdate(orderId, {
+    orderStatus: 'Cancelled',
+    paymentStatus: order.paymentMethod === 'Online' ? 'Refunded' : order.paymentStatus
+    })
 
-    return res.redirect('/view-orders?message=Order cancelled successfully&type=success')
+      if (refunded) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.NODEMAILER_EMAIL, 
+          pass: process.env.NODEMAILER_PASSWORD 
+        }
+      })
+
+      const mailOptions = {
+        from: process.env.NODEMAILER_EMAIL,
+        to: order.user.email,
+        subject: `Refund Initiated for Order ${order._id}`,
+        html: `
+          <p>Hi ${order.user.name},</p>
+          <p>Your order <b>${order._id}</b> has been cancelled and the refund has been initiated.</p>
+          <p>The refund will be credited to your account within 2 business days.</p>
+          <p>Thank you for shopping with us.</p>
+        `
+      }
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.error('Error sending refund email:', error)
+        else console.log('Refund email sent:', info.response)
+      })
+    }
+
+    return res.redirect('/myorders?message=Order cancelled successfully&type=success')
   } catch (err) {
     console.error('Error cancelling order:', err)
-    return res.redirect('/view-orders?message=Something went wrong&type=error')
+    return res.redirect('/myorders?message=Something went wrong&type=error')
   }
 }
 

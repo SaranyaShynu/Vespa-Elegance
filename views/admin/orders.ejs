@@ -58,69 +58,79 @@
 
                 <main class="admin-main dashboard-main">
                     <h1>All Orders</h1>
+                    <% if (message) { %>
+                        <div class="alert alert-<%= type %> mt-3">
+                            <%= message %>
+                        </div>
+                        <% } %>
 
-                    <table border="1" width="100%" cellpadding="10" cellspacing="0">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>User</th>
-                                <th>Amount</th>
-                                <th>Payment Method</th>
-                                <th>Payment Status</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (orders.length> 0) { %>
-                                <% orders.forEach(order=> { %>
+                            <table border="1" width="100%" cellpadding="10" cellspacing="0">
+                                <thead>
                                     <tr>
-                                        <td>
-                                            <%= order.orderId %>
-                                        </td>
-                                        <td>
-                                            <%= order.user?.email || 'N/A' %>
-                                        </td>
-                                        <td>₹<%= order.amount %>
-                                        </td>
-                                        <td>
-                                            <%= order.paymentMethod %>
-                                        </td>
-                                        <td>
-                                            <%= order.paymentStatus %>
-                                        </td>
-                                        <td>
-                                            <form action="/admin/orders/<%= order._id %>/status" method="POST">
-                                                <select name="status">
-                                                    <option value="Processing" <%= order.status === 'Processing' ? 'selected' : '' %>>Processing</option>
-    <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-    <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-    <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                                                </select>
-                                                <button type="submit">Update</button>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <%= order.createdAt.toDateString() %>
-                                        </td>
-                                        <td>
-                                            <a href="/admin/orders/<%= order._id %>" style="margin-right: 5px;">View</a>
-                                            <form action="/admin/orders/<%= order._id %>/delete" method="POST"
-                                                style="display:inline;">
-                                                <button type="submit"
-                                                    onclick="return confirm('Are you sure you want to delete this order?')">Delete</button>
-                                            </form>
-                                        </td>
+                                        <th>Order ID</th>
+                                        <th>User</th>
+                                        <th>Amount</th>
+                                        <th>Payment Method</th>
+                                        <th>Payment Status</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
                                     </tr>
-                                    <% }) %>
-                                        <% } else { %>
+                                </thead>
+                                <tbody>
+                                    <% if (orders.length> 0) { %>
+                                        <% orders.forEach(order=> { %>
                                             <tr>
-                                                <td colspan="8">No orders found.</td>
+                                                <td>
+                                                    <%= order.orderId %>
+                                                </td>
+                                                <td>
+                                                    <%= order.user?.email || 'N/A' %>
+                                                </td>
+                                                <td>₹<%= order.amount %>
+                                                </td>
+                                                <td>
+                                                    <%= order.paymentMethod %>
+                                                </td>
+                                                <td>
+                                                    <%= order.paymentStatus %>
+                                                </td>
+                                                <td>
+                                                    <form action="/admin/orders/<%= order._id %>/status" method="POST">
+                                                        <select name="orderStatus">
+                                                            <option value="Processing" <%=order.orderStatus==='Processing'
+                                                                ? 'selected' : '' %>>Processing</option>
+                                                            <option value="Shipped" <%=order.orderStatus==='Shipped'
+                                                                ? 'selected' : '' %>>Shipped</option>
+                                                            <option value="Delivered" <%=order.orderStatus==='Delivered'
+                                                                ? 'selected' : '' %>>Delivered</option>
+                                                            <option value="Cancelled" <%=order.orderStatus==='Cancelled'
+                                                                ? 'selected' : '' %>>Cancelled</option>
+                                                        </select>
+                                                        <button type="submit">Update</button>
+                                                    </form>
+                                                </td>
+                                                <td>
+                                                    <%= order.createdAt.toDateString() %>
+                                                </td>
+                                                <td>
+                                                    <a href="/admin/orders/<%= order._id %>"
+                                                        style="margin-right: 5px;">View</a>
+                                                    <form action="/admin/orders/<%= order._id %>/delete" method="POST"
+                                                        style="display:inline;">
+                                                        <button type="submit"
+                                                            onclick="return confirm('Are you sure you want to delete this order?')">Delete</button>
+                                                    </form>
+                                                </td>
                                             </tr>
-                                            <% } %>
-                        </tbody>
-                    </table>
+                                            <% }) %>
+                                                <% } else { %>
+                                                    <tr>
+                                                        <td colspan="8">No orders found.</td>
+                                                    </tr>
+                                                    <% } %>
+                                </tbody>
+                            </table>
                 </main>
         </div>
         <%- include("../partials/admin/footer") %>

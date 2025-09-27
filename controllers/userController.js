@@ -824,7 +824,7 @@ const placeCheckout = async (req, res) => {
     const codOrder = new Order({
       user: userId,
       products: cart.items.map(i => ({ productId: i.productId._id,
-        price:i.price || i.productId.price,
+        price:i.price ?? i.productId.price,
         quantity: i.quantity })),
       address:shippingAddress,
       paymentMethod:'COD',
@@ -892,7 +892,7 @@ const paymentSuccess = async (req, res) => {
     const order = new Order({
       user: userId,
       items: cart.items.map(i => ({ productId: i.productId._id, 
-        price:i.price || i.productId.price,
+        price:i.price ?? i.productId.price,
         quantity: i.quantity })),
       price,
       discount,
@@ -932,7 +932,7 @@ const cancelOrder = async (req, res) => {
     if (!userId) return res.redirect('/login')
 
     const orderId = req.params.id
-    const order = await Order.findOne({ _id: orderId, user: userId })
+    const order = await Order.findOne({ _id: orderId, user: userId }).populate('user')
 
     if (!order) {
       return res.redirect('/myorders?message=Order not found&type=error')
@@ -941,6 +941,8 @@ const cancelOrder = async (req, res) => {
     if (order.orderStatus === 'Cancelled') {
       return res.redirect('/myorders?message=Order is already cancelled&type=info')
     }
+
+    let newPaymentStatus
 
     // If the order was paid via online method, refund via Stripe
     if (order.paymentMethod === 'Online' && order.paymentStatus === 'Paid') {
@@ -955,40 +957,30 @@ const cancelOrder = async (req, res) => {
       await stripe.refunds.create({
         payment_intent: session.payment_intent,
       })
-     // order.paymentStatus = 'Refunded'
-    }
+       newPaymentStatus = 'Refunded'
 
-    await Order.findByIdAndUpdate(orderId, {
-    orderStatus: 'Cancelled',
-    paymentStatus: order.paymentMethod === 'Online' ? 'Refunded' : order.paymentStatus
-    })
-
-      if (refunded) {
-      const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-          user: process.env.NODEMAILER_EMAIL, 
-          pass: process.env.NODEMAILER_PASSWORD 
-        }
-      })
-
-      const mailOptions = {
-        from: process.env.NODEMAILER_EMAIL,
-        to: order.user.email,
-        subject: `Refund Initiated for Order ${order._id}`,
+     const userEmail = order.user.email
+      // Use your email service (nodemailer, etc.)
+      await sendEmail({
+        to: userEmail,
+        subject: 'Refund Initiated for Your Order',
         html: `
-          <p>Hi ${order.user.name},</p>
-          <p>Your order <b>${order._id}</b> has been cancelled and the refund has been initiated.</p>
-          <p>The refund will be credited to your account within 2 business days.</p>
-          <p>Thank you for shopping with us.</p>
+          <p>Hello ${order.user.name},</p>
+          <p>Your payment for order <b>${order._id}</b> has been refunded. It should reflect in your account within 2 business days.</p>
+          <p>Thank you for cooperate with us.</p>
         `
-      }
-
-      transporter.sendMail(mailOptions, (error, info) => {
-        if (error) console.error('Error sending refund email:', error)
-        else console.log('Refund email sent:', info.response)
       })
+
+    } else {
+      // For COD orders
+      newPaymentStatus = 'Cancelled'
     }
+
+    // Update order without triggering products validation
+    await Order.findByIdAndUpdate(orderId, {
+      orderStatus: 'Cancelled',
+      paymentStatus: newPaymentStatus
+    })
 
     return res.redirect('/myorders?message=Order cancelled successfully&type=success')
   } catch (err) {

@@ -798,6 +798,12 @@ const placeCheckout = async (req, res) => {
     }
 
     if (paymentMethod === 'Online') {
+
+        req.session.cartItems = cart.items.map(i => ({
+        productId: i.productId._id,
+        quantity: i.quantity,
+        price: i.price ?? i.productId.price
+      }))
       // Store shipping address in session for payment success
       req.session.shippingAddress = shippingAddress
       req.session.couponCode = couponCode || null
@@ -858,12 +864,11 @@ const placeCheckout = async (req, res) => {
 const paymentSuccess = async (req, res) => {
   try {
     const { session_id } = req.query
-   
-    const userId = req.user._id
-     if (!session_id) return res.redirect('/checkout')
-
     const session = await stripe.checkout.sessions.retrieve(session_id)
-    if (!session) return res.redirect('/checkout')
+    const userId = req.user._id
+  /*   if (!session_id) return res.redirect('/checkout')
+
+    if (!session) return res.redirect('/checkout')  */
     const cart = await Cart.findOne({ user: userId }).populate('items.productId')
     if (!cart || cart.items.length === 0) return res.redirect('/cart')
     let price = cart.items.reduce((sum, i) => sum + i.quantity * i.productId.price, 0)
@@ -897,7 +902,7 @@ const paymentSuccess = async (req, res) => {
       price,
       discount,
       finalPrice,
-      shippingAddress,
+      address:shippingAddress,
       paymentMethod: 'Stripe',
       paymentStatus: 'Paid',
       stripeSessionId: session.id,
@@ -912,10 +917,10 @@ const paymentSuccess = async (req, res) => {
       })
     }
 
-    await Cart.findOneAndDelete({ userId })
+    await Cart.findOneAndDelete({ user: userId })
 
     const populatedOrder = await Order.findById(order._id).populate('products.productId').populate('user')
-      return res.render('user/order-summary', {
+      return res.render('user/payment-success', {
       order: populatedOrder,
       message: 'Payment successful! Your order is confirmed.'
     })
@@ -1020,7 +1025,7 @@ const sendOrderEmail = async (to, order, subject) => {
       }
     })
 
-    const itemsList = order.products.map(p => `<li>${p.productId} x ${p.quantity}</li>`).join("")
+    const itemsList = order.products.map(p => `<li>${p.productId.name} x ${p.quantity}</li>`).join("")
 
     await transporter.sendMail({
       from: process.env.NODEMAILER_EMAIL,
@@ -1204,7 +1209,7 @@ const postRating = async (req, res) => {
 
        product.ratings = product.ratings.map(r => {
          if (!r) return null
-      if (typeof r === "number") return { user: null, rating: r }
+      if (typeof r === "number") return { userId: null, rating: r }
       return r
     }).filter(r => r !== null)
        
@@ -1212,7 +1217,7 @@ const postRating = async (req, res) => {
             if (existingRating) {
                 existingRating.rating = Number(rating) // update rating
             } else {
-                product.ratings.push({ user: userId, rating:Number(rating) })
+                product.ratings.push({ userId, rating:Number(rating) })
             }
 
 

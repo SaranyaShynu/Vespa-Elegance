@@ -106,7 +106,7 @@
                         <ul>
                             <% order.products.forEach(product=> { %>
                                 <li>
-                                    <img src="/<%= product.productId.image %>" width="80" alt="Product Image" />
+                                    <img src="/<%= product.productId.images[0] %>" width="80" alt="Product Image" />
                                     <p><strong>Name:</strong>
                                         <%= product.productId.name %>
                                     </p>

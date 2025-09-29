@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Vespa Models - Vespa Elegance</title>
+  <title><%= model.name %> - Vespa Elegance</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -22,38 +22,28 @@
       overflow: hidden;
       transition: all 0.3s ease;
       height: 100%;
-       display: flex;
-  flex-direction: column;
+      display: flex;
+      flex-direction: column;
     }
     .model-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
-
     .model-image {
-  width: 100%;
-  height: 240px;            /* fixed height for all */
-  overflow: hidden;         /* prevent image spill */
-}
+      width: 100%;
+      height: 240px;
+      overflow: hidden;
+    }
     .model-image img {
       width: 100%;
       height: 100%;
-      overflow: hidden;
-       object-position: center;
       object-fit: cover;
+      object-position: center;
       display:block;
-      
       border-bottom: 1px solid #f0f0f0;
     }
-    .model-info {
-      padding: 16px;
-      flex: 1;
-      
-    }
-    .model-title {
-      font-size: 1.2rem;
-      margin-bottom: 8px;
-    }
+    .model-info { padding: 16px; flex: 1; }
+    .model-title { font-size: 1.2rem; margin-bottom: 8px; }
     .color-dot {
       display: inline-block;
       width: 18px;
@@ -62,135 +52,112 @@
       margin-right: 5px;
       border: 1px solid #ddd;
     }
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 0.85rem;
-      border-radius: 6px;
-    }
-    .star-rating {
-  direction: rtl; /* right-to-left so stars fill leftwards */
-  display: inline-flex;
-  font-size: 2rem;
-}
-
-.star-rating input {
-  display: none; /* hide radio buttons */
-}
-
-.star-rating label {
-  color: #ccc;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.star-rating input:checked ~ label {
-  color: #ffc107; /* selected stars */
-}
-
-.star-rating label:hover,
-.star-rating label:hover ~ label {
-  color: #ffdb58; /* hover effect */
-}
-
+    .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
+    .star-rating { direction: rtl; display: inline-flex; font-size: 2rem; }
+    .star-rating input { display: none; }
+    .star-rating label { color: #ccc; cursor: pointer; transition: color 0.2s; }
+    .star-rating input:checked ~ label { color: #ffc107; }
+    .star-rating label:hover,
+    .star-rating label:hover ~ label { color: #ffdb58; }
   </style>
 </head>
 <body>
-  <div class="site-wrap">
+<div class="site-wrap">
 <%- include("../partials/user/header") %>
 
-  <!-- Breadcrumb -->
-  <div class="bg-light py-3">
-    <div class="container">
-      <div class="row">
-        <div class="col-md-12 mb-0">
-          <a href="/">Home</a>
-          <span class="mx-2 mb-0">/</span>
-          <strong class="text-black">Details</strong>
-        </div>
+<!-- Breadcrumb -->
+<div class="bg-light py-3">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-12 mb-0">
+        <a href="/">Home</a>
+        <span class="mx-2 mb-0">/</span>
+        <strong class="text-black">Details</strong>
       </div>
     </div>
   </div>
-
-  <div class="container mt-5">
-    <div class="row">
-      <!-- Left: Image Carousel -->
-      <div class="col-md-7">
-        <div id="carouselIndicators" class="carousel slide" data-ride="carousel">
-          <div class="carousel-inner">
-            <% if (model.images && model.images.length> 0) { %>
-              <% model.images.forEach(function(img, index){ %>
-                <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
-                  <img src="/images/<%= img %>" class="d-block w-100 img-fluid rounded shadow" alt="Model Image">
-                </div>
-                <% }) %>
-                  <% } %>
-          </div>
-          <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-          </a>
-          <a class="carousel-control-next" href="#carouselIndicators" role="button" data-slide="next">
-            <span class="carousel-control-next-icon"></span>
-          </a>
-        </div>
-      </div>
-
-      <!-- Right: Model Details -->
-      <div class="col-md-5">
-        <h2 class="mb-3">
-          <%= model.name %>
-        </h2>
-        <p class="text-muted">Category: <%= model.category %>
-        </p>
-        <p class="h4 text-primary">₹ <%= model.price %>
-        </p>
-
-        <!-- Colors -->
-        <h5 class="mt-4">Available Colors:</h5>
-        <div class="mb-3">
-          <% if (model.color && model.color.length) { %>
-            <% model.color.forEach(function(c){ %>
-              <span class="d-inline-block rounded-circle mr-2"
-                style="width:30px; height:30px; background-color:<%= c %>; border:1px solid #ccc;">
-              </span>
-              <% }); %>
-                <% } else { %>
-                  <p>No colors available</p>
-                  <% } %>
-        </div>
-        <div class="star-rating" data-model-id="<%= model._id %>">
-  <% for (let i = 5; i >= 1; i--) { %>
-    <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>">
-    <label for="star<%= i %>">★</label>
-  <% } %>
 </div>
-<p id="rating-msg" class="text-success mt-2"></p>
 
-
-        <!-- Add to Cart -->
-        <form action="/cart/add" method="POST">
-          <input type="hidden" name="productId" value="<%= model._id %>">
-          <input type="hidden" name="price" value="<%= model.price %>">
-          <button type="submit" class="btn btn-primary btn-lg">Add to Cart</button>
-        </form>
-
-        <!-- Direct Buy (optional) -->
-        <a href="/cart" class="btn btn-outline-success btn-lg mt-3">
-          Buy Now
+<div class="container mt-5">
+  <div class="row">
+    <!-- Left: Image Carousel -->
+    <div class="col-md-7">
+      <div id="carouselIndicators" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+          <% if (model.images && model.images.length > 0) { %>
+            <% model.images.forEach(function(img, index) { %>
+              <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
+                <img src="/images/<%= img %>" class="d-block w-100 img-fluid rounded shadow" alt="Model Image">
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+        <a class="carousel-control-prev" href="#carouselIndicators" role="button" data-slide="prev">
+          <span class="carousel-control-prev-icon"></span>
+        </a>
+        <a class="carousel-control-next" href="#carouselIndicators" role="button" data-slide="next">
+          <span class="carousel-control-next-icon"></span>
         </a>
       </div>
     </div>
+
+    <!-- Right: Model Details -->
+    <div class="col-md-5">
+      <h2 class="mb-3"><%= model.name %></h2>
+      <p class="text-muted">Category: <%= model.category %></p>
+      <p class="h4 text-primary">₹ <%= model.price %></p>
+
+      <!-- Colors & Stock -->
+      <h5 class="mt-4">Available Colors:</h5>
+      <div class="mb-3 d-flex align-items-center">
+        <% if (model.color && model.color.length) { %>
+          <% model.color.forEach(function(c){ %>
+            <span class="d-inline-block rounded-circle mr-2"
+                  style="width:30px; height:30px; background-color:<%= c %>; border:1px solid #ccc;"></span>
+          <% }) %>
+        <% } else { %>
+          <p>No colors available</p>
+        <% } %>
+
+        <span class="ml-3 px-2 py-1 rounded"
+              style="background-color: <%= model.status === 'Available' ? '#28a745' : '#dc3545' %>; color:white; font-weight:bold;">
+          <%= model.status %>
+        </span>
+      </div>
+
+      <!-- Ratings -->
+      <div class="star-rating" data-model-id="<%= model._id %>">
+        <% for (let i = 5; i >= 1; i--) { %>
+          <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>">
+          <label for="star<%= i %>">★</label>
+        <% } %>
+      </div>
+      <p id="rating-msg" class="text-success mt-2"></p>
+
+      <!-- Add to Cart -->
+      <form action="/cart/add" method="POST">
+        <input type="hidden" name="productId" value="<%= model._id %>">
+        <input type="hidden" name="price" value="<%= model.price %>">
+        <button type="submit" class="btn btn-primary btn-lg mt-3">Add to Cart</button>
+      </form>
+
+      <a href="/cart" class="btn btn-outline-success btn-lg mt-2">Buy Now</a>
     </div>
-    <%- include('../partials/user/footer') %>
-  
-      <script src="/js/jquery-3.3.1.min.js"></script>
-  <script src="/js/jquery-ui.js"></script>
-  <script src="/js/popper.min.js"></script>
-  <script src="/js/bootstrap.min.js"></script>
-  <script src="/js/owl.carousel.min.js"></script>
-  <script src="/js/jquery.magnific-popup.min.js"></script>
-  <script src="/js/aos.js"></script>
-  <script src="/js/main.js"></script>
-  <script>
+  </div>
+</div>
+
+<%- include('../partials/user/footer') %>
+
+<script src="/js/jquery-3.3.1.min.js"></script>
+<script src="/js/jquery-ui.js"></script>
+<script src="/js/popper.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/owl.carousel.min.js"></script>
+<script src="/js/jquery.magnific-popup.min.js"></script>
+<script src="/js/aos.js"></script>
+<script src="/js/main.js"></script>
+
+<script>
 document.querySelectorAll('.star-rating input').forEach(star => {
   star.addEventListener('change', async function() {
     const rating = this.value;
@@ -201,22 +168,19 @@ document.querySelectorAll('.star-rating input').forEach(star => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ modelId, rating })
-      })
-      const data=await res.json()
+      });
+      const data = await res.json();
 
       if (res.ok) {
-      /*  document.getElementById('rating-msg').textContent = "Thanks for rating!";
-      } else {
-        document.getElementById('rating-msg').textContent = "Error saving rating.";
-      } */
-       const ratingContainer = this.closest('.model-card').querySelector('.rating-stars')
-        let starsHtml = ''
+        const ratingContainer = document.querySelector('.star-rating');
+        let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
-          starsHtml += i <= Math.round(data.averageRating) ? '★' : '☆'
+          starsHtml += i <= Math.round(data.averageRating) ? '★' : '☆';
         }
-        ratingContainer.innerHTML = starsHtml + ` <small>(${data.totalRatings} reviews)</small>`
+        ratingContainer.innerHTML = starsHtml + ` <small>(${data.totalRatings} reviews)</small>`;
+        document.getElementById('rating-msg').textContent = "Thanks for rating!";
       } else {
-        alert(data.error || "Error saving rating.")
+        alert(data.error || "Error saving rating.");
       }
     } catch (err) {
       console.error(err);
@@ -225,6 +189,5 @@ document.querySelectorAll('.star-rating input').forEach(star => {
   });
 });
 </script>
-
 </body>
 </html>

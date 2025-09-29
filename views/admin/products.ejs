@@ -88,8 +88,25 @@
                 <td><%= product.name %></td>
                 <td><%= product.category %></td>
                 <td>₹ <%= product.price %></td>
-                <td><%= product.color %></td>
-                <td><%= product.status %></td>
+               <td>
+  <% if (product.color && product.color.length > 0) { %>
+    <div style="display:flex; gap:5px; justify-content:center; flex-wrap:wrap;">
+      <% product.color.forEach(c => { %>
+        <span style="width:20px; height:20px; border-radius:50%; background-color:<%= c %>; border:1px solid #ccc;"></span>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <span>No colors</span>
+  <% } %>
+</td>
+<td>
+  <% if(product.status === 'Available') { %>
+    <span class="badge bg-success">Available</span>
+  <% } else { %>
+    <span class="badge bg-danger">Out of stock</span>
+  <% } %>
+</td>
+
                 <td>
                   <div style="display: flex; gap: 8px; align-items: center;">
                     <button class="btn btn-primary btn-sm"

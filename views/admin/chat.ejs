@@ -29,59 +29,70 @@
   <script>
     const socket = io();
     const userList = document.getElementById('userList');
-    const messages = document.getElementById('messages');
+    const messagesEl = document.getElementById('messages');
     const input = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
 
     let currentRoom = null;
+    const adminName = "Admin";
 
-    // ✅ Join admin room
-    socket.emit('joinAdminRoomForUser', userId);
+    // Join admin dashboard
+    socket.emit('joinAdminRoomForUser', "<%= admin._id %>");
 
-    // ✅ Update user list when new users online
-    socket.on('updateOnlineUsers', (users) => {
+    // Update online users
+    socket.on('updateOnlineUsers', users => {
       userList.innerHTML = "";
-      users.forEach(userId => {
+      users.forEach(uid => {
         const li = document.createElement('li');
-        li.textContent = userId;
+        li.textContent = uid;
         li.style.cursor = "pointer";
         li.onclick = () => {
-          currentRoom = userId;
-          messages.innerHTML = "";
-          socket.emit('joinAdminRoomForUser', userId);
-          console.log("Switched to user room:", userId);
+          currentRoom = uid;
+          messagesEl.innerHTML = "";
+          socket.emit('joinAdminRoomForUser', uid);
+
+          // Load chat history
+          fetch(`/admin/messages/${uid}`)
+            .then(res => res.json())
+            .then(msgs => {
+              msgs.forEach(msg => {
+                const li = document.createElement('li');
+                li.className = msg.isFromAdmin ? "admin" : "user";
+                li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;
+                messagesEl.appendChild(li);
+              });
+              messagesEl.scrollTop = messagesEl.scrollHeight;
+            });
         };
         userList.appendChild(li);
       });
     });
 
-    // ✅ Send message
+    // Send message
     sendBtn.addEventListener('click', () => {
-      if (!currentRoom) {
-        alert("Select a user first!");
-        return;
-      }
-      const msg = input.value.trim();
-      if (!msg) return;
+      if (!currentRoom) return alert("Select a user first!");
+      const content = input.value.trim();
+      if (!content) return;
 
       socket.emit('chat message', {
-        roomId,
-        sender: "admin",
-        senderName: "Admin",
-        content: msg,
+        roomId: currentRoom,
+        sender: "<%= admin._id %>",
+        senderName: adminName,
+        content,
         isFromAdmin: true
       });
 
       input.value = '';
     });
 
-    // ✅ Receive messages
-    socket.on('chat message', (msg) => {
+    // Receive messages
+    socket.on('chat message', msg => {
+      if (!currentRoom) return;
       const li = document.createElement('li');
       li.className = msg.isFromAdmin ? "admin" : "user";
       li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;
-      messages.appendChild(li);
-      messages.scrollTop = messages.scrollHeight;
+      messagesEl.appendChild(li);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     });
   </script>
 </body>

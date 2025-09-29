@@ -4,7 +4,6 @@ const getChatHistory = async (req, res) => {
   try {
     const roomId = req.params.roomId       // user._id for room
     const messages = await Message.find({ roomId })
-      .populate('sender', 'name')
       .sort({ createdAt: 1 })
     res.json(messages)
   } catch (err) {
@@ -14,7 +13,6 @@ const getChatHistory = async (req, res) => {
 }
 
 const saveMessage = async (msgData) => {
-  console.log("Received msgData in saveMessage:", msgData)
 
   if (!msgData.roomId || !msgData.sender) {
     throw new Error('roomId and sender are required')

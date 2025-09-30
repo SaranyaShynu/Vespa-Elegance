@@ -76,7 +76,7 @@
                         <%= order.paymentStatus %>
                     </p>
                     <p><strong>Status:</strong>
-                        <%= order.status %>
+                        <%= order.orderStatus %>
                     </p>
                     <p><strong>Order Date:</strong>
                         <%= order.createdAt.toDateString() %>
@@ -106,14 +106,14 @@
                         <ul>
                             <% order.products.forEach(product=> { %>
                                 <li>
-                                    <img src="/<%= product.productId.images[0] %>" width="80" alt="Product Image" />
+                                    <img src="/<%= product.productId?.images?.[0] || 'default-image.jpg' %>%>" width="80" alt="Product Image" />
                                     <p><strong>Name:</strong>
-                                        <%= product.productId.name %>
+                                        <%= product.productId.name || 'N/A' %>
                                     </p>
                                     <p><strong>Quantity:</strong>
                                         <%= product.quantity %>
                                     </p>
-                                    <p><strong>Price:</strong> ₹<%= product.productId.price %>
+                                    <p><strong>Price:</strong> ₹<%= product.price %>
                                     </p>
                                 </li>
                                 <hr>
@@ -125,7 +125,7 @@
                             <% if (
       order.paymentMethod !== 'COD' && 
       order.paymentStatus === 'Paid' && 
-      (order.status === 'Processing' || order.status === 'Delivered')
+      (order.orderStatus === 'Processing' || order.orderStatus === 'Cancelled')
 ) { %>
     <form action="/admin/orders/<%= order._id %>/refund" method="POST"
           onsubmit="return confirm('Are you sure you want to refund this order?');">

@@ -1,4 +1,7 @@
 const Order=require('../../models/orderModel')
+const Stripe = require('stripe')
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY)
+const sendEmail = require("../../utils/sendEmail")
 
 const getOrders=async(req,res)=>{
     try {
@@ -96,7 +99,7 @@ const refundOrder = async (req, res) => {
       return res.status(400).send("Refund not applicable for this order")
     }
 
-    const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId)
+    const session = await stripe.checkout.sessions.retrieve(order.stripePaymentId)
     if (!session.payment_intent) {
       console.error("Stripe session missing payment_intent")
       return res.status(500).send("Unable to process refund")

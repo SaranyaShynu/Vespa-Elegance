@@ -56,6 +56,7 @@
             .then(res => res.json())
             .then(msgs => {
               msgs.forEach(msg => {
+                console.log('chat message received in admin:', msg);
                 const li = document.createElement('li');
                 li.className = msg.isFromAdmin ? "admin" : "user";
                 li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;

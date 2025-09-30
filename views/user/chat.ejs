@@ -22,46 +22,35 @@
     <button type="submit">Send</button>
   </form>
 
-  <script>
+  <script src="/socket.io/socket.io.js"></script>
+<script>
+  (function(){
     const socket = io();
+    const roomId = "<%= user._id %>";
+    const sender = "<%= user._id %>";
+    const senderName = "<%= user.name.replace(/"/g,'\\"') %>";
 
-    const input = document.getElementById('messageInput');
-    const messagesE1 = document.getElementById('messages');
-    const form = document.getElementById('form');
+    console.log('User will join room', roomId);
+    socket.emit('joinRoom', roomId);
 
-   // <% if (user) { %>
-      const roomId = "<%= user._id %>";
-      const sender = "<%= user._id %>";
-      const senderName = "<%= user.name %>";
-  //  <% } else { %>
-   //   alert("User not found! Cannot start chat.");
-    //<% } %>
-
-    /* Join user room
-    if (roomId && sender) {
-      socket.emit('joinRoom', roomId);
-      console.log('Joined room:', roomId, 'as sender:', sender);
-    }  */
-   socket.emit('joinRoom', roomId);
-
-    // Load previous messages
+    // load history
     fetch(`/admin/messages/${roomId}`)
-      .then(res => res.json())
+      .then(r => r.json())
       .then(msgs => {
-        msgs.forEach(msg => {
+        const messagesEl = document.getElementById('messages');
+        msgs.forEach(m => {
           const li = document.createElement('li');
-          li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;
+          li.textContent = `${m.isFromAdmin ? 'Admin' : (m.senderName || 'You')}: ${m.content}`;
           messagesEl.appendChild(li);
         });
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-      });
+      }).catch(err => console.error('history fetch failed', err));
 
-    // Send message (on Enter or button)
+    const form = document.getElementById('form');
+    const input = document.getElementById('messageInput');
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const content = input.value.trim();
       if (!content) return;
-
       socket.emit('chat message', {
         roomId,
         sender,
@@ -69,18 +58,20 @@
         content,
         isFromAdmin: false
       });
-
       input.value = '';
     });
 
-    // Receive messages
     socket.on('chat message', (msg) => {
+      const messagesEl = document.getElementById('messages');
+      // show all messages for this room (server emits only correct room but admin also gets copies)
+      if (msg.roomId !== roomId) return;
       const li = document.createElement('li');
-      const name = msg.isFromAdmin ? "Admin" : msg.senderName;
-       li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;
-      messagesE1.appendChild(li);
-      messagesE1.scrollTop = messagesE1.scrollHeight;
+      li.textContent = `${msg.isFromAdmin ? 'Admin' : (msg.senderName || 'You')}: ${msg.content}`;
+      messagesEl.appendChild(li);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
     });
-  </script>
+  })();
+</script>
+
 </body>
 </html>

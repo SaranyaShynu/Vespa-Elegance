@@ -763,51 +763,55 @@ const applyCoupon = async (req, res) => {
 
 const placeCheckout = async (req, res) => {
   try {
-    const userId = req.user._id
-    const { selectedAddress, couponCode, paymentMethod } = req.body
+    const userId = req.user._id;
+    const { selectedAddress, couponCode, paymentMethod } = req.body;
 
-    const user = await User.findById(userId)
-    if (!user) return res.redirect('/checkout')
+    const user = await User.findById(userId);
+    if (!user) return res.redirect('/checkout');
 
     // Selected address
-    const shippingAddress = user.addresses[selectedAddress]
-    if (!shippingAddress) {
-      return res.redirect('/checkout?message=Please+select+a+valid+address')
-    }
+    const shippingAddress = user.addresses[selectedAddress];
+    if (!shippingAddress)
+      return res.redirect('/checkout?message=Select a valid address');
 
     // Cart
-    const cart = await Cart.findOne({ userId }).populate('items.productId')
-    if (!cart || cart.items.length === 0) return res.redirect('/cart')
+    const cart = await Cart.findOne({ userId }).populate('items.productId');
+    if (!cart || cart.items.length === 0) return res.redirect('/cart');
 
-    // Calculate total
-    let price = cart.items.reduce((sum, item) => sum + item.productId.price * item.quantity, 0)
-    let discount = 0
-    let finalPrice=price
-    let appliedCoupon = null
+    // Calculate totals
+    let price = cart.items.reduce((sum, i) => sum + i.productId.price * i.quantity, 0);
+    let discount = 0;
+    let finalPrice = price;
+    let appliedCoupon = null;
 
     if (couponCode) {
-      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() })
-      if (coupon && new Date(coupon.expiredOn) > new Date() && !coupon.usedBy.includes(userId.toString())) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        active: true,
+        expiredOn: { $gt: new Date() }
+      });
+
+      if (coupon && !coupon.usedBy.includes(userId.toString())) {
         discount = coupon.discountType === 'percentage'
           ? (coupon.discountValue / 100) * price
-          : coupon.discountValue
-        if (discount > price) discount = price
-        finalPrice=price-discount
-        appliedCoupon=coupon
+          : coupon.discountValue;
+        finalPrice = Math.max(price - discount, 0);
+        appliedCoupon = coupon;
       }
     }
 
+    // Save session for Stripe
+    req.session.userId = userId;
+    req.session.cartItems = cart.items.map(i => ({
+      productId: i.productId._id,
+      price: i.productId.price,
+      quantity: i.quantity
+    }));
+    req.session.shippingAddress = shippingAddress;
+    req.session.couponCode = couponCode || null;
+
     if (paymentMethod === 'Online') {
-
-        req.session.cartItems = cart.items.map(i => ({
-        productId: i.productId._id,
-        quantity: i.quantity,
-        price: i.price ?? i.productId.price
-      }))
-      // Store shipping address in session for payment success
-      req.session.shippingAddress = shippingAddress
-      req.session.couponCode = couponCode || null
-
+      // Stripe Checkout
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         mode: 'payment',
@@ -817,117 +821,131 @@ const placeCheckout = async (req, res) => {
             product_data: { name: 'Order Total' },
             unit_amount: Math.round(finalPrice * 100),
           },
-          quantity: 1,
+          quantity: 1
         }],
-        success_url: `${req.protocol}://${req.get('host')}/payment-success?session_id={CHECKOUT_SESSION_ID}&coupon=${appliedCoupon?.code || ''}`,
-        cancel_url: `${req.protocol}://${req.get('host')}/checkout`,
-      })
+        success_url: `${req.protocol}://${req.get('host')}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.protocol}://${req.get('host')}/checkout`
+      });
 
-      return res.redirect(session.url)
+      return res.redirect(session.url);
     }
 
     // COD Order
-    const codOrder = new Order({
-      user: userId,
-      products: cart.items.map(i => ({ productId: i.productId._id,
-        price:i.price ?? i.productId.price,
-        quantity: i.quantity })),
-      address:shippingAddress,
-      paymentMethod:'COD',
-      discount,
-      finalPrice,
-      paymentStatus: 'Pending',
-      couponApplied: appliedCoupon ? appliedCoupon._id : null
-    })
-
-    await codOrder.save()
-
-    if (appliedCoupon) {
-       await Coupon.findByIdAndUpdate(appliedCoupon._id, {
-        $addToSet: { usedBy: userId }
-      })
-      }
-
-    // Clear cart
-    await Cart.findOneAndDelete({ userId })
-
-    // Populate products for order summary
-    const populatedOrder = await Order.findById(codOrder._id).populate('products.productId').populate('user')
-
-    return res.render('user/order-summary', { order: populatedOrder })
-  } catch (err) {
-    console.error('Error placing order', err)
-    return res.redirect('/cart')
-  }
-}
-
-const paymentSuccess = async (req, res) => {
-  try {
-    const { session_id } = req.query
-    const session = await stripe.checkout.sessions.retrieve(session_id)
-    const userId = req.user._id
-  /*   if (!session_id) return res.redirect('/checkout')
-
-    if (!session) return res.redirect('/checkout')  */
-    const cart = await Cart.findOne({ user: userId }).populate('items.productId')
-    if (!cart || cart.items.length === 0) return res.redirect('/cart')
-    let price = cart.items.reduce((sum, i) => sum + i.quantity * i.productId.price, 0)
-    let discount = 0
-    let finalPrice = price
-    let appliedCoupon = null
-
-    if (req.session.couponCode) {
-      const coupon = await Coupon.findOne({ code: req.session.couponCode.toUpperCase(),
-        active: true,
-        expiredOn: { $gt: new Date() }
-       })
-       if (coupon && !coupon.usedBy.some(u => u.toString() === userId.toString())) {
-        discount = coupon.discountType === 'percentage'
-          ? (coupon.discountValue / 100) * price
-          : coupon.discountValue
-        if (discount > price) discount = price
-        finalPrice = price - discount
-        appliedCoupon = coupon
-      }
-    }
-
-    const shippingAddress = req.session.shippingAddress
-    if (!shippingAddress) return res.redirect('/checkout?message=Missing+shipping+info')
-
     const order = new Order({
       user: userId,
-      items: cart.items.map(i => ({ productId: i.productId._id, 
-        price:i.price ?? i.productId.price,
-        quantity: i.quantity })),
+      products: req.session.cartItems,
       price,
       discount,
       finalPrice,
-      address:shippingAddress,
-      paymentMethod: 'Stripe',
-      paymentStatus: 'Paid',
-      stripeSessionId: session.id,
+      address: shippingAddress,
+      paymentMethod: 'COD',
+      paymentStatus: 'Pending',
       couponApplied: appliedCoupon ? appliedCoupon._id : null
-    })
+    });
 
-    await order.save()
+    await order.save();
 
     if (appliedCoupon) {
       await Coupon.findByIdAndUpdate(appliedCoupon._id, {
         $addToSet: { usedBy: userId }
-      })
+      });
     }
 
-    await Cart.findOneAndDelete({ user: userId })
+    // Clear cart
+    await Cart.findOneAndDelete({ userId });
+    req.session.cartItems = [];
+    req.session.shippingAddress = null;
+    req.session.couponCode = null;
 
-    const populatedOrder = await Order.findById(order._id).populate('products.productId').populate('user')
-      return res.render('user/payment-success', {
+    const populatedOrder = await Order.findById(order._id)
+      .populate('products.productId')
+      .populate('user');
+
+    return res.render('user/order-summary', { order: populatedOrder });
+
+  } catch (err) {
+    console.error('Error placing order', err);
+    return res.redirect('/cart');
+  }
+};
+
+const paymentSuccess = async (req, res) => {
+  try {
+    const { session_id } = req.query;
+    if (!session_id) return res.redirect('/checkout');
+
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (session.payment_status !== 'paid') return res.redirect('/checkout');
+
+    const userId = req.session.userId;
+    const cartItems = req.session.cartItems || [];
+    const shippingAddress = req.session.shippingAddress;
+    const couponCode = req.session.couponCode || null;
+
+    if (!userId || !cartItems.length || !shippingAddress) {
+      return res.redirect('/checkout');
+    }
+
+    let price = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    let discount = 0;
+    let finalPrice = price;
+    let appliedCoupon = null;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        active: true,
+        expiredOn: { $gt: new Date() }
+      });
+
+      if (coupon && !coupon.usedBy.includes(userId.toString())) {
+        discount = coupon.discountType === 'percentage'
+          ? (coupon.discountValue / 100) * price
+          : coupon.discountValue;
+        finalPrice = Math.max(price - discount, 0);
+        appliedCoupon = coupon;
+      }
+    }
+
+    // Save order
+    const order = new Order({
+      user: userId,
+      products: cartItems,
+      price,
+      discount,
+      finalPrice,
+      address: shippingAddress,
+      paymentMethod: 'Stripe',
+      paymentStatus: 'Paid',
+      stripePaymentId: session.id,
+      couponApplied: appliedCoupon ? appliedCoupon._id : null
+    });
+
+    await order.save();
+
+    if (appliedCoupon) {
+      await Coupon.findByIdAndUpdate(appliedCoupon._id, {
+        $addToSet: { usedBy: userId }
+      });
+    }
+
+    await Cart.findOneAndDelete({ user: userId });
+    req.session.cartItems = [];
+    req.session.shippingAddress = null;
+    req.session.couponCode = null;
+
+    const populatedOrder = await Order.findById(order._id)
+      .populate('products.productId')
+      .populate('user');
+
+    return res.render('user/order-summary', {
       order: populatedOrder,
       message: 'Payment successful! Your order is confirmed.'
-    })
-   // return res.render('user/payment-success', { order: populatedOrder })
+    });
+
   } catch (err) {
-    console.error('Payment success error', err)
-    res.redirect('/')
+    console.error('Payment success error', err);
+    return res.redirect('/checkout');
   }
 }
 

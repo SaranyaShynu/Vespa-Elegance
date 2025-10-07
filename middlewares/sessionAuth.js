@@ -6,6 +6,7 @@ const sessionAuth = async (req, res, next) => {
     try {
         if (req.session.userId) return next()
 
+
         // 2. If JWT exists in cookies, verify and set session
         const token = req.cookies.userToken
         if (!token) return res.redirect('/login')  // not logged in

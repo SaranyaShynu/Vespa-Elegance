@@ -5,7 +5,7 @@ const sendEmail = require("../../utils/sendEmail")
 
 const getOrders=async(req,res)=>{
     try {
-        const orders=await Order.find().populate('products.productId').populate('user','name email').sort({createdAt:-1})
+        const orders=await Order.find().populate('products.productId' , 'name price images').populate('user','name email').sort({createdAt:-1})
         const message = req.query.message || null
         const type = req.query.type || 'info'
 
@@ -19,7 +19,7 @@ const viewDetails=async (req,res)=>{
     try {
       const order=await Order.findById(req.params.id)
       .populate('user','name email')
-      .populate('products.productId','name price image')  
+      .populate('products.productId','name price images')  
 
       if(!order) 
         return res.status(404).send('Order not Found')
@@ -55,7 +55,7 @@ const updateStatus = async (req, res) => {
      let newPaymentStatus = order.paymentStatus
 
     if (orderStatus === "Delivered" && order.paymentMethod === "COD") {       // Handle COD auto-payment on delivery
-      order.newPaymentStatus = "Paid"
+      newPaymentStatus = "Paid"
     }
 
     if (orderStatus === "Cancelled") {                // if Cancelled, reset paymentStatus
@@ -95,7 +95,9 @@ const refundOrder = async (req, res) => {
       return res.status(404).send("Order not found")
     }
 
-    if (order.paymentMethod !== "Online" || order.paymentStatus !== "Paid") {
+    if (order.paymentMethod !== "Online" || 
+      order.paymentStatus !== "Paid" ||
+      order.orderStatus !== "Cancelled") {
       return res.status(400).send("Refund not applicable for this order")
     }
 

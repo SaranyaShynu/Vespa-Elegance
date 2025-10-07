@@ -16,7 +16,7 @@ function chatSocket(io) {
       // Notify admin dashboard about online users
       io.to('adminRoom').emit('updateOnlineUsers', Object.keys(onlineUsers))
 
-      console.log(`User ${socket.id} joined room ${roomId}`)
+      console.log(`User joined room ${roomId}`)
     })
 
     socket.on('joinAdminRoomForUser', (userId) => {
@@ -24,9 +24,8 @@ function chatSocket(io) {
 
       socket.join(userId)        // admin joins specific user room
       socket.join('adminRoom')  // admin also joins admin dashboard
-
+console.log(`Admin joined user room ${userId}`)
       io.to(socket.id).emit('updateOnlineUsers', Object.keys(onlineUsers))
-      console.log(`Admin ${socket.id} joined user room ${userId}`)
     })
     // Handle chat messages
     socket.on('chat message', async (msgData) => {
@@ -39,15 +38,13 @@ function chatSocket(io) {
           senderName: savedMsg.senderName || "User",
           content: savedMsg.content,
           isFromAdmin: savedMsg.isFromAdmin,
+          roomId: savedMsg.roomId,
           createdAt: savedMsg.createdAt
         }
 
-        // Emit to user's room
-        io.to(msgData.roomId).emit('chat message', emitMsg)
-
-        // Emit to admin dashboard
-        io.to('adminRoom').emit('chat message', emitMsg)
-
+       
+      io.to(msgData.roomId).emit('chat message', emitMsg)
+    
         console.log(`Message sent to room ${msgData.roomId} and adminRoom`)
       } catch (err) {
         console.error('Chat save failed:', err)
@@ -61,7 +58,7 @@ function chatSocket(io) {
 
           // Update admin dashboard with current online users
           io.to('adminRoom').emit('updateOnlineUsers', Object.keys(onlineUsers))
-          console.log(`User ${socket.id} removed from room ${roomId}`)
+          console.log(`User disconnected ${roomId}`)
           break
         }
       }

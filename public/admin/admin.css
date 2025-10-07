@@ -10,6 +10,7 @@ body {
   padding: 10px  20px;
   display: flex;
   align-items: center;
+  height: 60px;
 }
 
 .admin-header .sidebar-toggle {
@@ -17,26 +18,35 @@ body {
   border: none;
   color: white;
   font-size: 20px;
-  margin-right: 10px;
+  margin-right: 15px;
   cursor: pointer;
+}
+
+.admin-footer {
+  background: #181212;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+  margin-left: 240px;
 }
 
 .admin-container {
   display: flex;
   min-height: calc(100vh - 50px); /*Full height minus header */
+  overflow: hidden;
 }
 
 .admin-sidebar {
-  width: 220px;
+  width: 240px;
   background: #222;
   color: white;
-  padding-top: 20px;
+  padding-top: 10px 0;
   position: fixed;
   left:0;
-  top:50px;
-  height: calc(100vh - 50px);
-  transition: width 0.3s ease, left 0.3s ease;
-  z-index: 1000; 
+  top:60px;
+  overflow-y: auto;
+  height: calc(100vh - 60px);
+  transition: left 0.3s ease;
   
 }
 
@@ -67,6 +77,46 @@ body {
   bottom: 20px;
   width: 100%; 
 }
+.admin-sidebar.active {
+  left: -240px;
+}
+
+.admin-sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.admin-sidebar nav ul li {
+  margin: 0;
+}
+
+.admin-sidebar nav ul li a {
+  display: block;
+  padding: 12px 20px;
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.admin-sidebar nav ul li a:hover {
+  background: #444;
+}
+
+.sidebar-footer {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border-top: 1px solid #444;
+}
+
+/* Scrollbar */
+.admin-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+.admin-sidebar::-webkit-scrollbar-thumb {
+  background: #666;
+  border-radius: 4px;
+}
 
 .admin-sidebar.collapsed {
   width: 60px;
@@ -83,7 +133,7 @@ body {
 /* Mobile hidden state */
 @media (max-width: 768px) {
   .admin-sidebar {
-    left: -220px; /* hide off-screen */
+    left: -240px; /* hide off-screen */
   }
   .admin-sidebar.active {
     left: 0; /* slide in */
@@ -101,8 +151,8 @@ body {
   flex: 1;
   padding: 20px;
   transition: margin-left 0.3s ease;
-  margin-left: 220px;
-  background: #e7b4e7;
+  margin-left: 240px;
+  background: #e0bde0;
   min-height: calc(100vh - 60px);
 }
 

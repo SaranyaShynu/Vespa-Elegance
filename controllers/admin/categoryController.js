@@ -12,14 +12,16 @@ const loadCategory= async (req,res)=>{
 
 const addCategory=async (req,res)=>{
     try{
-        const {name}=req.body
+        const {name, subcategories}=req.body
         if(!name || name.trim()==='') return res.render('admin/category', {message:'Category name Required'})
 
             const existing=await Category.findOne({name:name.trim()})
         if(existing) return res.render('admin/category',{message:'Already Exists'})
                 
-           const subcategories = req.body.subcategories.split(",")
-           const category=new Category({name:name.trim(),subCategories})
+            const subCategoryArray = subcategories
+            ? subcategories.split(',').map(item => item.trim()).filter(Boolean)
+            : []
+           const category=new Category({name:name.trim(),subCategory:subCategoryArray})
            await category.save()
            return  res.redirect('/admin/products')
     } catch(err){

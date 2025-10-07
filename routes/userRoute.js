@@ -28,10 +28,11 @@ router.get('/',userController.loadHomepage)
 router.get('/shop',userController.loadShopping)
 
 router.get('/auth/google',passport.authenticate('google',{scope:['profile','email']}))
-router.get('/auth/google/callback',passport.authenticate('google',{session :false}),async (req,res)=>{
-    const user=req.user
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' })
-    res.cookie('userToken',token,{httpOnly:true})
+router.get('/auth/google/callback',passport.authenticate('google',{session:false}),
+async(req,res)=>{
+   const user=req.user
+   const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' })
+   res.cookie('userToken',token,{httpOnly:true})  
     res.redirect('/')
 })
 router.get('/login',userController.loadLogin)
@@ -74,12 +75,12 @@ router.get('/invoice/:id', sessionAuth, userController.invoice)
 
 
 router.get('/myorders',sessionAuth,userController.getOrders)
-router.get('/myorders/:id',sessionAuth,userController.getOrderDetails)
+router.get('/myorders/:id/orderDetails',sessionAuth,userController.getOrderDetails)
 router.post("/myorders/:id/cancel", sessionAuth,userController.cancelOrder)
 
 router.post('/feedback',auth.userAuth,userController.postFeedback)
 router.get('/feedback',userController.getFeedback)
-router.get('/chat/',auth.userAuth,chatController.loadUserChat)
+router.get('/chat',auth.userAuth,chatController.loadUserChat)
 
 router.get('/wishlist',auth.userAuth,userController.getWishlist)
 router.post('/wishlist/add/:productId',auth.userAuth,userController.addtoWishlist)

@@ -32,20 +32,17 @@ async (accessToken,refreshToken,profile,done)=>{
 ))
 
 /*passport.serializeUser((user,done)=>{
-      done(null,user.id)
+      done(null,user._id)
 })
 
-passport.deserializeUser((id,done)=>{
-    User.findById(id)
-    .then(user=>{
+passport.deserializeUser(async(id,done)=>{
+    try{
+        const user= await User.findById(id)
         done(null,user)
-    })
-
-    .catch(err=>{
+    }catch(err){
         done(err,null)
-    })
-
-})*/
+    }
+})   */
 
 
 module.exports=passport

@@ -68,29 +68,32 @@ const login = async (req, res) => {
   }
 }
 
-const loadDashboard= async (req,res)=>{
-    try{
-    
-      if(!req.admin){
-        return res.redirect('/admin/login')
-      }
+const loadDashboard = async (req, res) => {
+  try {
+    if (!req.admin) {
+      return res.redirect('/admin/login')
+    }
 
     const productCount = await Product.countDocuments()
     const orderCount = await Order.countDocuments()
     const userCount = await User.countDocuments()
 
-    const sales=await Order.aggregate([
-      {$match:{paymentStatus:'paid'}},
-      {$group:{
-        _id:{$month:'$createdAt'},
-        total:{$sum:'$totalAmount'}
-      }},
-      {$sort:{'_id':1}}
+    // Sales per month (only paid orders)
+    const sales = await Order.aggregate([
+      { $match: { paymentStatus: 'Paid' } },   // Be sure your schema stores "Paid"
+      {
+        $group: {
+          _id: { $month: '$createdAt' },
+          total: { $sum: '$totalAmount' }
+        }
+      },
+      { $sort: { '_id': 1 } }
     ])
-    
-    const salesData=Array(12).fill(0)
-    sales.forEach((item)=>{
-          salesData[item._id-1]=item.total
+
+    // Fill all 12 months
+    const salesData = Array(12).fill(0)
+    sales.forEach(item => {
+      salesData[item._id - 1] = item.total
     })
 
     const salesLabel = [
@@ -98,53 +101,19 @@ const loadDashboard= async (req,res)=>{
       'July', 'August', 'September', 'October', 'November', 'December'
     ]
 
-    const orderCategory=await Order.aggregate([
-      {$unwind:'$items'},
-      {
-        $lookup:{
-          from:'products',
-          localField:'items.productId',
-          foreignField:'_id',
-          as:'product'
-        }
-      },
-       { $unwind:'$product'},
-       {
-        $lookup:{
-          from:'categories',
-          localField:'product.category',
-          foreignField:'_id',
-          as:'category'
-        }
-       },
-       {$unwind:'$category'},
-       {
-        $group:{
-          _id:'$category.name',
-          count:{$sum:'$items.quantity'}
-        }
-       }
-    ])
-
-    const categoryLabels=orderCategory.map(item=>item._id)
-    const categoryCounts=orderCategory.map(item=>item.count)
-
-
-    res.render('admin/dashboard',{
-      adminName:req.admin?.name,
+    res.render('admin/dashboard', {
+      adminName: req.admin?.name,
       productCount,
       orderCount,
       userCount,
       salesLabel,
-      salesData: JSON.stringify(salesData),
-      orderCategoryData: JSON.stringify({ labels: categoryLabels, data: categoryCounts}),
+      salesData
     })
-  
-    }catch(err){
-      console.error('Dashboard load error',err.message)
-      res.redirect('/admin/pageError')
-    }
+  } catch (err) {
+    console.error('Dashboard load error', err.message)
+    res.redirect('/admin/pageError')
   }
+}
 
 
 const logout= async (req,res)=>{

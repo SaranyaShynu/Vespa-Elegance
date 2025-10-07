@@ -49,8 +49,8 @@ router.get('/coupons/delete/:id',adminAuth,couponController.deleteCoupon)
 
 router.get('/feedback',adminAuth,feedbackController.getFeedback)
 router.post('/feedback/:id/response',adminAuth,feedbackController.respondFeedback)
-router.get('/chat/:userId',adminAuth,chatController.loadAdminChat)
 router.get('/chat/history/:roomId',adminAuth,messageController.getChatHistory)
+router.get('/chat/:userId',adminAuth,chatController.loadAdminChat)
 
 router.get('/service',adminController.loadService)
 

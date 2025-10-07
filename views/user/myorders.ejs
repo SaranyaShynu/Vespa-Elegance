@@ -34,7 +34,7 @@
           <% order.products.forEach(item => { %>
             <tr>
               <td>
-                <img src="<%= item.productId.image %>" width="60" class="me-2">
+                <img src="/images/<%= item.productId.images?.[0] || 'default-image.jpg' %>" width="60" class="me-2">
                 <%= item.productId.name %>
               </td>
               <td><%= item.quantity %></td>
@@ -46,8 +46,12 @@
                   <form method="POST" action="/myorders/<%= order._id %>/cancel">
                     <button class="btn btn-danger btn-sm">Cancel</button>
                   </form>
-                <% } %>
+                <% } %> <br>
+                  <form method="GET" action="/myorders/<%= order._id %>/orderDetails">
+        <button class="btn btn-info btn-sm">Order Details</button>
+      </form>
               </td>
+              
             </tr>
           <% }) %>
         <% }) %>

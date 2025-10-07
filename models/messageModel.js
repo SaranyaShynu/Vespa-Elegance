@@ -8,7 +8,11 @@ const messageSchema=new mongoose.Schema({
     sender:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'User',
-        required:true
+        required: function() { return !this.isFromAdmin }    // required only if not admin
+    },
+    senderName: {
+    type: String,
+    required:true,
     },
     content:{
         type:String,

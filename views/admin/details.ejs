@@ -106,7 +106,7 @@
                         <ul>
                             <% order.products.forEach(product=> { %>
                                 <li>
-                                    <img src="/<%= product.productId?.images?.[0] || 'default-image.jpg' %>%>" width="80" alt="Product Image" />
+                                    <img  src="<%= product.productId?.images?.[0] ? '/images/' + product.productId.images[0] : '/images/default-image.jpg' %>"  width="80" alt="Product Image" />
                                     <p><strong>Name:</strong>
                                         <%= product.productId.name || 'N/A' %>
                                     </p>
@@ -123,9 +123,9 @@
                             <p>No products in this order.</p>
                             <% } %>
                             <% if (
-      order.paymentMethod !== 'COD' && 
+      order.paymentMethod === 'Online' && 
       order.paymentStatus === 'Paid' && 
-      (order.orderStatus === 'Processing' || order.orderStatus === 'Cancelled')
+      (order.orderStatus === 'Cancelled')
 ) { %>
     <form action="/admin/orders/<%= order._id %>/refund" method="POST"
           onsubmit="return confirm('Are you sure you want to refund this order?');">

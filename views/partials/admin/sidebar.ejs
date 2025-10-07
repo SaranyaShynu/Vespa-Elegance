@@ -1,4 +1,4 @@
-<aside class="admin-sidebar">
+<aside class="admin-sidebar" id="adminSidebar">
   <nav>
     <ul class="menu-list">
       <li><a href="/admin/dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
@@ -17,17 +17,18 @@
       <h3>Online Users</h3>
       <ul id="onlineUsersList"></ul>
       <hr>
-      <h3>Chat Messages</h3>
+     <!--<h3>Chat Messages</h3>
       <ul id="adminMessages"></ul>
     </div>
 
-    <!-- Logout -->
+     Logout -->
     <div class="sidebar-footer">
       <a href="/admin/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
   </nav>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/js/adminSocket.js"></script>
 
 <script>
   // Admin sidebar script (must run after DOM loaded)

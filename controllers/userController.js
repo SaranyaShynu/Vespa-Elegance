@@ -15,6 +15,7 @@ const Cart = require('../models/cartModel')
 const Feedback = require('../models/feedbackModel')
 const crypto = require("crypto");
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const path = require('path')
 const generateInvoice = require("../utils/generateInvoice")
 
 const pageNotFound = async (req, res) => {
@@ -867,7 +868,7 @@ const placeCheckout = async (req, res) => {
     console.error('Error placing order', err)
     return res.redirect('/cart')
   }
-};
+}
 
 const paymentSuccess = async (req, res) => {
   try {
@@ -965,9 +966,14 @@ const cancelOrder = async (req, res) => {
       return res.redirect('/myorders?message=Order is already cancelled&type=info')
     }
 
-    let newPaymentStatus
+    let newPaymentStatus= order.paymentMethod === 'Online' ? 'Paid' : 'Cancelled'
+    await Order.findByIdAndUpdate(orderId, {
+      orderStatus: 'Cancelled',
+      paymentStatus: newPaymentStatus
+    })
 
-    // If the order was paid via online method, refund via Stripe
+
+    /* If the order was paid via online method, refund via Stripe
     if (order.paymentMethod === 'Online' && order.paymentStatus === 'Paid') {
       const session = await stripe.checkout.sessions.retrieve(order.stripePaymentId)
 
@@ -1003,7 +1009,7 @@ const cancelOrder = async (req, res) => {
     await Order.findByIdAndUpdate(orderId, {
       orderStatus: 'Cancelled',
       paymentStatus: newPaymentStatus
-    })
+    })   */
 
     return res.redirect('/myorders?message=Order cancelled successfully&type=success')
   } catch (err) {

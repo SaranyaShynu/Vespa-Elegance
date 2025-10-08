@@ -7,13 +7,14 @@ const productSchema=new mongoose.Schema({
     },
     category:{
         type:String,
-        enum: ["Vespa", "Vespa S", "Vespa Tech", "Special Editions"],
-        required:true
+        required:true,
+        trim:true
     },
     subCategory:{ 
         type: String,
-        enum: ["125cc", "150cc", "Electric"], 
-        required: true },
+        required: true,
+        trim:true
+    },
     description:{
         type:String,
         required:true

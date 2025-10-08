@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 const { generateToken, verifyToken } = require('../utils/jwtHelper')
 const Address=require('../models/addressModel')
+const Category=require('../models/categoryModel')
 const Order = require('../models/orderModel')
 const Coupon = require('../models/couponModel')
 const Product = require('../models/productModel')
@@ -540,11 +541,11 @@ const getFeedback = async (req, res) => {
 const getModels = async (req, res) => {
     try {
         const filter = {}
-        if (req.query.category) {
-            filter.category = req.query.category;
+        if (req.query.category && req.query.category !== "")  {
+            filter.category = req.query.category.trim()
         }
-        if (req.query.subCategory) {
-            filter.subCategory = req.query.subCategory
+        if (req.query.subCategory && req.query.subCategory !== "") {
+            filter.subCategory = req.query.subCategory.trim()
         }
         let models = await Product.find(filter).lean()
         models = models.map(model => {
@@ -563,9 +564,10 @@ const getModels = async (req, res) => {
       const user = await User.findById(req.user._id).populate('wishlist')
       wishlist = user.wishlist.map(item => item._id.toString())
     }
-
+ const categories = await Category.find({}).lean()
         res.render('user/model', {
             models,
+            categories,
             user:req.user || null,
             isLoggedIn: !!req.user,     
             wishlist,  
@@ -862,7 +864,11 @@ const placeCheckout = async (req, res) => {
       .populate('products.productId')
       .populate('user')
 
-    return res.render('user/order-summary', { order: populatedOrder })
+    sendOrderEmail(user.email, populatedOrder, 'Order Confirmed - Vespa Elegance')
+
+    return res.render('user/order-summary', { order: populatedOrder,
+        message: 'Your order has been confirmed!'
+     })
 
   } catch (err) {
     console.error('Error placing order', err)
@@ -930,7 +936,7 @@ const paymentSuccess = async (req, res) => {
       })
     }
 
-    await Cart.findOneAndDelete({ user: userId })
+    await Cart.findOneAndDelete({ userId })
     req.session.cartItems = []
     req.session.shippingAddress = null
     req.session.couponCode = null
@@ -938,6 +944,8 @@ const paymentSuccess = async (req, res) => {
     const populatedOrder = await Order.findById(order._id)
       .populate('products.productId')
       .populate('user')
+
+    sendOrderEmail(user.email, populatedOrder, 'Payment Successful - Order Confirmed')
 
     return res.render('user/order-summary', {
       order: populatedOrder,

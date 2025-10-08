@@ -120,25 +120,36 @@
         <div class="row mb-4">
           <div class="col-md-12 text-center">
             <form method="GET" action="/model" class="form-inline justify-content-center gap-2">
-              <select name="category" onchange="this.form.submit()" class="form-control w-auto d-inline-block mx-2">
-                <option value="">All Categories</option>
-                <option value="Vespa" <%=(query.category==="Vespa" ) ? "selected" : "" %>>Vespa</option>
-                <option value="Vespa S" <%=(query.category==="Vespa S" ) ? "selected" : "" %>>Vespa S</option>
-                <option value="Vespa Tech" <%=(query.category==="Vespa Tech" ) ? "selected" : "" %>>Vespa Tech</option>
-                <option value="Special Editions" <%=(query.category==="Special Editions" ) ? "selected" : "" %>>Special Editions</option>
-              </select>
+              <!-- Category Dropdown -->
+<select name="category" id="categorySelect" onchange="this.form.submit()" class="form-control w-auto d-inline-block mx-2">
+  <option value="">All Categories</option>
+  <% categories.forEach(cat => { %>
+    <option value="<%= cat.name %>" <%= query.category === cat.name ? "selected" : "" %>>
+      <%= cat.name %>
+    </option>
+  <% }) %>
+</select>
 
-              <select name="subCategory" onchange="this.form.submit()" class="form-control w-auto d-inline-block">
-                <option value="">All Engines</option>
-                <option value="125cc" <%=(query.subCategory==="125cc" ) ? "selected" : "" %>>125cc</option>
-                <option value="150cc" <%=(query.subCategory==="150cc" ) ? "selected" : "" %>>150cc</option>
-                <option value="Electric" <%=(query.subCategory==="Electric" ) ? "selected" : "" %>>Electric</option>
-              </select>
+<!-- Subcategory Dropdown -->
+<select name="subCategory" id="subCategorySelect" onchange="this.form.submit()" class="form-control w-auto d-inline-block mx-2">
+  <option value="">All Engines</option>
+  <% 
+    const selectedCat = categories.find(c => c.name === query.category);
+    const subList = selectedCat ? selectedCat.subCategory : categories.flatMap(c => c.subCategory);
+    const uniqueSubs = [...new Set(subList)];
+  %>
+  <% uniqueSubs.forEach(sub => { %>
+    <option value="<%= sub %>" <%= query.subCategory === sub ? "selected" : "" %> >
+      <%= sub %>
+    </option>
+  <% }) %>
+</select>
+
 
               <a href="/model" class="btn btn-secondary mx-2">Reset</a>
             </form>
           </div>
-        </div>
+        </div><br>
 
         <!-- Model Cards -->
         <div class="row">

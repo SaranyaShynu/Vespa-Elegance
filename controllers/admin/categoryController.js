@@ -33,10 +33,10 @@ const addCategory=async (req,res)=>{
 const listCategory=async (req,res)=>{
     try{
         const categories=await Category.find({})
-        res.render('admin/category',{categories})
+        res.render('admin/category',{categories, message:null})
     }catch(err){
         console.error('Add Category Error',err)
-        res.render('admin/category',{message:'Could not fetch categories'})
+        res.render('admin/category',{message:'Could not fetch categories', categories: []})
     }
 }
 

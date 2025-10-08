@@ -125,32 +125,37 @@
     </div>
   </section>
 
-  <!-- Models -->
-  <section class="py-5">
-    <div class="container">
-      <h2 class="text-center mb-5">Our Models</h2>
-      <div class="row g-4">
-        <div class="col-md-4">
-          <a class="model-card" href="#">
-            <img src="images/msp2.jpg" class="img-fluid rounded shadow">
-            <h5 class="mt-3">Vespa Tech</h5>
-          </a>
-        </div>
-        <div class="col-md-4">
-          <a class="model-card" href="#">
-            <img src="images/msp1.jpg" class="img-fluid rounded shadow">
-            <h5 class="mt-3">Vespa Sprint</h5>
-          </a>
-        </div>
-        <div class="col-md-4">
-          <a class="model-card" href="#">
-            <img src="images/special.jpg" class="img-fluid rounded shadow">
-            <h5 class="mt-3">Special Editions</h5>
-          </a>
-        </div>
+ <section class="py-5 bg-light">
+  <div class="container">
+    <h2 class="text-center mb-5">Our Models</h2>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <a class="model-card d-block text-center" href="#">
+          <div class="model-img">
+            <img src="images/msp2.jpg" alt="Vespa Tech">
+          </div>
+          <h5 class="mt-3">Vespa Tech</h5>
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a class="model-card d-block text-center" href="#">
+          <div class="model-img">
+            <img src="images/msp1.jpg" alt="Vespa Sprint">
+          </div>
+          <h5 class="mt-3">Vespa Sprint</h5>
+        </a>
+      </div>
+      <div class="col-md-4">
+        <a class="model-card d-block text-center" href="#">
+          <div class="model-img">
+            <img src="images/special.jpg" alt="Special Editions">
+          </div>
+          <h5 class="mt-3">Special Editions</h5>
+        </a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 <% if (user) { %>
   <%- include('../partials/user/chatBox') %>
 <% } %>

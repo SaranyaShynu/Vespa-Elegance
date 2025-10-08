@@ -84,7 +84,7 @@ const loadDashboard = async (req, res) => {
       {
         $group: {
           _id: { $month: '$createdAt' },
-          total: { $sum: '$totalAmount' }
+          total: { $sum: '$finalPrice' }
         }
       },
       { $sort: { '_id': 1 } }

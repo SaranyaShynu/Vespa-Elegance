@@ -26,6 +26,7 @@ function chatSocket(io) {
       socket.join('adminRoom')  // admin also joins admin dashboard
 console.log(`Admin joined user room ${userId}`)
       io.to(socket.id).emit('updateOnlineUsers', Object.keys(onlineUsers))
+      
     })
     // Handle chat messages
     socket.on('chat message', async (msgData) => {

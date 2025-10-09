@@ -54,6 +54,7 @@ router.get('/service',userController.getService)
 router.get('/model',userController.getModels)
 router.get('/model/:id',userController.getModelDetails)
 router.post('/model/rate',auth.userAuth,userController.postRating)
+router.post('/model/review', auth.userAuth, userController.addReview)
 
 router.post('/cart/add',auth.userAuth,userController.addtoCart)
 router.get('/cart',auth.userAuth,userController.getCart)

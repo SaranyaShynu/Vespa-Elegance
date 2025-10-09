@@ -16,49 +16,30 @@
   <link rel="stylesheet" href="/css/style.css">
 
   <style>
-    .model-card {
-      background: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-    }
-    .model-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    .model-image {
-      width: 100%;
-      height: 240px;
-      overflow: hidden;
-    }
-    .model-image img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center;
-      display:block;
-      border-bottom: 1px solid #f0f0f0;
-    }
+    .model-card { background: #fff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease; }
+    .model-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+    .model-image { width: 100%; height: 240px; overflow: hidden; }
+    .model-image img { width: 100%; height: 100%; object-fit: cover; object-position: center; display:block; border-bottom: 1px solid #f0f0f0; }
     .model-info { padding: 16px; flex: 1; }
     .model-title { font-size: 1.2rem; margin-bottom: 8px; }
-    .color-dot {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      margin-right: 5px;
-      border: 1px solid #ddd;
-    }
+    .color-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; margin-right: 5px; border: 1px solid #ddd; }
     .btn-sm { padding: 6px 12px; font-size: 0.85rem; border-radius: 6px; }
-    .star-rating { direction: rtl; display: inline-flex; font-size: 2rem; }
+    .star-rating { direction: rtl; display: inline-flex; font-size: 1.5rem; }
     .star-rating input { display: none; }
     .star-rating label { color: #534b4b; cursor: pointer; transition: color 0.2s; }
     .star-rating input:checked ~ label { color: #ffc107; }
     .star-rating label:hover,
     .star-rating label:hover ~ label { color: #ffdb58; }
+
+    /* Reviews */
+    .review-card { background: #f8f9fa; border-radius: 6px; padding: 15px; margin-bottom: 10px; }
+    .review-card p { margin: 5px 0 0 0; }
+
+    .review-form textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; resize: vertical; }
+    .review-form button { margin-top: 10px; }
+
+    .text-success { color: #28a745; }
+    .text-muted { color: #6c757d; }
   </style>
 </head>
 <body>
@@ -125,23 +106,61 @@
         </span>
       </div>
 
-      <!-- Ratings -->
+      <!-- Average Rating -->
+      <p>Average Rating: <%= model.averageRating %> / 5 (<%= model.ratings.length %> reviews)</p>
+
+      <!-- Star rating input (if logged in) -->
+      <% if (isLoggedIn) { %>
       <div class="star-rating" data-model-id="<%= model._id %>">
         <% for (let i = 5; i >= 1; i--) { %>
           <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>">
           <label for="star<%= i %>">★</label>
         <% } %>
       </div>
-      <p id="rating-msg" class="text-success mt-2"></p>
 
-      <!-- Add to Cart -->
+      <div class="review-form mt-2">
+        <textarea id="reviewText" rows="3" placeholder="Write a review (optional)"></textarea>
+        <button class="btn btn-primary" id="submitReview">Submit Review</button>
+        <p id="rating-msg" class="text-success mt-2"></p>
+      </div>
+      <% } else { %>
+        <p class="text-muted">Login to rate and review this product.</p>
+      <% } %>
+
+      <!-- Add to Cart / Buy Now -->
       <form action="/cart/add" method="POST">
         <input type="hidden" name="productId" value="<%= model._id %>">
         <input type="hidden" name="price" value="<%= model.price %>">
         <button type="submit" class="btn btn-primary btn-lg mt-3">Add to Cart</button>
       </form>
-
       <a href="/checkout" class="btn btn-outline-success btn-lg mt-2">Buy Now</a>
+    </div>
+  </div>
+
+  <!-- Reviews List -->
+  <div class="row mt-5">
+    <div class="col-md-12">
+      <h4>Reviews</h4>
+      <div id="reviewList">
+        <% if (reviews && reviews.length) { %>
+          <% reviews.forEach(review => { %>
+            <div class="review-card">
+              <div class="d-flex justify-content-between">
+                <strong><%= review.userId ? review.userId.name : 'Anonymous' %></strong>
+                <small><%= new Date(review.createdAt).toLocaleString() %></small>
+              </div>
+              <div>
+                <span>Rating: <%= review.rating %> / 5</span>
+                <% if (review.review) { %>
+                  <p><%= review.review %></p>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p class="text-muted">No reviews yet.</p>
+        <% } %>
+      </div>
     </div>
   </div>
 </div>
@@ -162,23 +181,46 @@ document.querySelectorAll('.star-rating input').forEach(star => {
   star.addEventListener('change', async function() {
     const rating = this.value;
     const modelId = this.closest('.star-rating').dataset.modelId;
+    const reviewText = document.getElementById('reviewText').value;
 
     try {
       const res = await fetch('/model/rate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ modelId, rating })
+        body: JSON.stringify({ modelId, rating, review: reviewText })
       });
       const data = await res.json();
 
       if (res.ok) {
+        // update stars and message
         const ratingContainer = document.querySelector('.star-rating');
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
           starsHtml += i <= Math.round(data.averageRating) ? '★' : '☆';
         }
         ratingContainer.innerHTML = starsHtml + ` <small>(${data.totalRatings} reviews)</small>`;
+
         document.getElementById('rating-msg').textContent = "Thanks for rating!";
+        document.getElementById('reviewText').value = '';
+
+        // Update reviews list dynamically
+        const reviewList = document.getElementById('reviewList');
+        reviewList.innerHTML = '';
+        data.reviews.forEach(review => {
+          const div = document.createElement('div');
+          div.className = 'review-card';
+          div.innerHTML = `
+            <div class="d-flex justify-content-between">
+              <strong>${review.userName || 'Anonymous'}</strong>
+              <small>${new Date(review.createdAt).toLocaleString()}</small>
+            </div>
+            <div>
+              <span>Rating: ${review.rating} / 5</span>
+              ${review.review ? `<p>${review.review}</p>` : ''}
+            </div>
+          `;
+          reviewList.prepend(div); // newest first
+        });
       } else {
         alert(data.error || "Error saving rating.");
       }

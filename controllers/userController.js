@@ -581,20 +581,49 @@ const getModels = async (req, res) => {
 
 const getModelDetails = async (req, res) => {
     try {
-        const model = await Product.findById(req.params.id)
+        const model = await Product.findById(req.params.id).populate('ratings.userId', 'name')
 
         if (!model) {
             return res.status(404).send('Model not Found')
         }
         res.render('user/modelDetails', {
             model,
-             user: req.user,                 
-      isLoggedIn: !!req.user 
+            reviews: model.ratings,
+            user: req.user,                 
+            isLoggedIn: !!req.user 
         })
     } catch (err) {
         console.error('Error feting Model Details', err)
         res.status(500).send('Server Error')
     }
+}
+
+const addReview = async (req, res) => {
+  try {
+    const { modelId, rating, review } = req.body
+    const userId = req.session.user?._id
+
+    if (!userId) return res.status(401).json({ error: "Login required" })
+
+    const product = await Product.findById(modelId)
+    if (!product) return res.status(404).json({ error: "Product not found" })
+
+    // check if already rated
+    const existing = product.ratings.find(r => r.userId.toString() === userId.toString())
+    if (existing) {
+      existing.rating = rating
+      existing.review = review
+      existing.createdAt = new Date()
+    } else {
+      product.ratings.push({ userId, rating, review })
+    }
+
+    await product.save()
+    res.json({ success: true })
+  } catch (err) {
+    console.error('Add review error:', err)
+    res.status(500).json({ error: 'Server error' })
+  }
 }
 
 const addtoCart = async (req, res) => {
@@ -1229,7 +1258,7 @@ const removefromWishlist = async (req, res) => {
 
 const postRating = async (req, res) => {
     try {
-        const { modelId, rating } = req.body
+        const { modelId, rating, review } = req.body
         const userId = req.user?._id
          if (!userId) 
             return res.status(401).json({ error: "User not authenticated" })
@@ -1239,24 +1268,38 @@ const postRating = async (req, res) => {
 
              if (!Array.isArray(product.ratings)) product.ratings = []
 
-       product.ratings = product.ratings.map(r => {
+     /*  product.ratings = product.ratings.map(r => {
          if (!r) return null
       if (typeof r === "number") return { userId: null, rating: r }
       return r
-    }).filter(r => r !== null)
+    }).filter(r => r !== null)   */
        
             const existingRating = product.ratings.find(r => r.user?.toString() === userId.toString())    // Check if user already rated
             if (existingRating) {
                 existingRating.rating = Number(rating) // update rating
-            } else {
-                product.ratings.push({ userId, rating:Number(rating) })
+                  if (review) existingRating.review = review
+      existingRating.createdAt = new Date()
+    }  else {
+                product.ratings.push({ userId, rating:Number(rating), review })
             }
 
 
         await product.save() 
         const total = product.ratings.reduce((acc, r) => acc + (r.rating || 0), 0)
         const avg = (total / product.ratings.length).toFixed(1)
-        res.json({ success: true, averageRating: avg, totalRatings: product.ratings.length })
+      //  res.json({ success: true, averageRating: avg, totalRatings: product.ratings.length })
+
+       res.json({ 
+      success: true, 
+      averageRating: avg, 
+      totalRatings: product.ratings.length,
+      reviews: product.ratings.map(r => ({
+        userId: r.userId,
+        rating: r.rating,
+        review: r.review,
+        createdAt: r.createdAt
+      }))
+    })
     } catch (err) {
         console.error('Error on postRating' , err)
         res.status(500).json({error:"Server error",details:err.message})
@@ -1292,6 +1335,7 @@ module.exports = {
     getFeedback,
     getModels,
     getModelDetails,
+    addReview,
     addtoCart,
     getCart,
     updateCart,

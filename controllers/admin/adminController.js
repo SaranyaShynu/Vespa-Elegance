@@ -78,36 +78,11 @@ const loadDashboard = async (req, res) => {
     const orderCount = await Order.countDocuments()
     const userCount = await User.countDocuments()
 
-    // Sales per month (only paid orders)
-    const sales = await Order.aggregate([
-      { $match: { paymentStatus: 'Paid' } },   // Be sure your schema stores "Paid"
-      {
-        $group: {
-          _id: { $month: '$createdAt' },
-          total: { $sum: '$finalPrice' }
-        }
-      },
-      { $sort: { '_id': 1 } }
-    ])
-
-    // Fill all 12 months
-    const salesData = Array(12).fill(0)
-    sales.forEach(item => {
-      salesData[item._id - 1] = item.total
-    })
-
-    const salesLabel = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ]
-
     res.render('admin/dashboard', {
-      adminName: req.admin?.name,
+      adminName: req.admin?.name || 'Admin',
       productCount,
       orderCount,
-      userCount,
-      salesLabel,
-      salesData
+      userCount
     })
   } catch (err) {
     console.error('Dashboard load error', err.message)
@@ -115,6 +90,54 @@ const loadDashboard = async (req, res) => {
   }
 }
 
+const getChartData = async (req, res) => {
+  try {
+    const filter = req.query.filter || 'monthly'
+
+    let groupId, labelFormat
+
+    if (filter === 'daily') {
+      groupId = { day: { $dayOfMonth: "$createdAt" }, month: { $month: "$createdAt" } }
+      labelFormat = "%d %b"
+    } else if (filter === 'yearly') {
+      groupId = { year: { $year: "$createdAt" } }
+      labelFormat = "%Y"
+    } else {
+      groupId = { month: { $month: "$createdAt" } }
+      labelFormat = "%b"
+    }
+
+    //  Aggregate sales data
+    const sales = await Order.aggregate([
+      { $match: { paymentStatus: "Paid" } },
+      { $group: { _id: groupId, total: { $sum: "$finalPrice" }, date: { $first: "$createdAt" } } },
+      { $sort: { "_id": 1 } },
+      {
+        $project: {
+          _id: 0,
+          label: { $dateToString: { format: labelFormat, date: "$date" } },
+          total: 1
+        }
+      }
+    ])
+
+    const salesLabel = sales.map(s => s.label)
+    const salesData = sales.map(s => s.total)
+
+    //  Order status pie chart
+    const statusStats = await Order.aggregate([
+      { $group: { _id: "$orderStatus", count: { $sum: 1 } } }
+    ])
+
+    const statusLabels = statusStats.map(s => s._id)
+    const statusData = statusStats.map(s => s.count)
+
+    res.json({ salesLabel, salesData, statusLabels, statusData })
+  } catch (err) {
+    console.error("Error fetching chart data:", err)
+    res.status(500).json({ message: "Error fetching chart data" })
+  }
+}
 
 const logout= async (req,res)=>{
   try{
@@ -136,6 +159,7 @@ module.exports = {
     loadLogin,
     login,
     loadDashboard,
+    getChartData,
     pageError,
     logout,
     loadService

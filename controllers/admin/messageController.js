@@ -3,7 +3,7 @@ const Message = require('../../models/messageModel');
 const getChatHistory = async (req, res) => {
   try {
     const roomId = req.params.roomId       // user._id for room
-    const messages = await Message.find({ roomId })
+    const messages = await Message.find({ roomId }).sort({ createdAt: 1 })
       .sort({ createdAt: 1 })
     res.json(messages)
   } catch (err) {

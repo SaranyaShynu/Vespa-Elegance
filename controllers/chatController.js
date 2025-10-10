@@ -25,7 +25,8 @@ const loadAdminChat = async (req, res) => {
     console.error(err)
     res.status(500).send('Server Error')
   }
-};
+}
+
 
 module.exports = { 
     loadUserChat, 

@@ -1,5 +1,6 @@
 // sockets/chatSocket.js
-const messageController = require('../controllers/admin/messageController');
+const messageController = require('../controllers/admin/messageController')
+const User = require('../models/userModel')
 
 const onlineUsers = {}  // { roomId: socketId }
 

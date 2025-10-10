@@ -9,6 +9,7 @@ const passport = require('passport')
 const verifyToken = require('../middlewares/verifyToken')
 const auth=require('../middlewares/auth')
 const sessionAuth = require('../middlewares/sessionAuth')
+const messageController=require('../controllers/admin/messageController')
 
 router.use((req, res, next) => {
   res.locals.isLoggedIn = !!req.user
@@ -67,6 +68,10 @@ router.post('/checkout/place-order',sessionAuth,userController.placeCheckout)
 //router.post('/confirm-order',auth.userAuth,userController.confirmOrder)
 router.get('/payment-success', sessionAuth, userController.paymentSuccess)
 router.get('/invoice/:id', sessionAuth, userController.invoice)
+router.post('/buy-now', sessionAuth, userController.buyNow)
+router.get('/buy-payment-success', sessionAuth, userController.buyNowPaymentSuccess)
+
+
 
 /* router.get('/stripe-checkout', auth.userAuth, (req, res) => {
         res.render('user/stripeCheckout', {
@@ -82,6 +87,7 @@ router.post("/myorders/:id/cancel", sessionAuth,userController.cancelOrder)
 router.post('/feedback',auth.userAuth,userController.postFeedback)
 router.get('/feedback',userController.getFeedback)
 router.get('/chat',auth.userAuth,chatController.loadUserChat)
+router.get('/chat/history/:roomId', auth.userAuth, messageController.getChatHistory)
 
 router.get('/wishlist',auth.userAuth,userController.getWishlist)
 router.post('/wishlist/add/:productId',auth.userAuth,userController.addtoWishlist)

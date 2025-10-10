@@ -922,6 +922,9 @@ const paymentSuccess = async (req, res) => {
       return res.redirect('/checkout')
     }
 
+     const user = await User.findById(userId)
+    if (!user) return res.redirect('/checkout')
+
     let price = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
     let discount = 0
     let finalPrice = price
@@ -1054,6 +1057,98 @@ const cancelOrder = async (req, res) => {
     return res.redirect('/myorders?message=Something went wrong&type=error')
   }
 }
+
+// Buy Now route handler
+const buyNow = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { productId, quantity, selectedAddress } = req.body;
+
+    const product = await Product.findById(productId);
+    if (!product) return res.redirect('/');
+
+    // Save temporary session
+    req.session.buyNow = {
+      productId: product._id,
+      quantity: quantity || 1,
+      price: product.price,
+      finalPrice: product.price, // can apply coupon if needed
+      shippingAddress: selectedAddress
+    };
+
+    // Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [{
+        price_data: {
+          currency: 'inr',
+          product_data: { name: product.name },
+          unit_amount: Math.round(product.price * 100)
+        },
+        quantity: quantity || 1
+      }],
+      success_url: `${req.protocol}://${req.get('host')}/buy-now/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${req.protocol}://${req.get('host')}/model/${productId}`
+    });
+
+    return res.redirect(session.url);
+
+  } catch (err) {
+    console.error(err);
+    return res.redirect('/')
+  }
+}
+
+const buyNowPaymentSuccess = async (req, res) => {
+  try {
+    const { session_id } = req.query;
+    if (!session_id) return res.redirect('/');
+
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (session.payment_status !== 'paid') return res.redirect('/');
+
+    const userId = req.session.userId;
+    const buyNowData = req.session.buyNow;
+
+    if (!buyNowData || !userId) return res.redirect('/');
+
+    const { productId, quantity, price, finalPrice, shippingAddress } = buyNowData;
+    const product = await Product.findById(productId);
+    if (!product) return res.redirect('/');
+
+    const order = new Order({
+      user: userId,
+      products: [{ productId, price, quantity }],
+      price,
+      discount: 0,
+      finalPrice,
+      address: shippingAddress,
+      paymentMethod: 'Online',
+      paymentStatus: 'Paid',
+      stripePaymentId: session.id
+    });
+
+    await order.save();
+    req.session.buyNow = null; // clear session
+
+    const populatedOrder = await Order.findById(order._id)
+      .populate('products.productId')
+      .populate('user');
+
+    sendOrderEmail(populatedOrder.user.email, populatedOrder, 'Payment Successful - Order Confirmed');
+
+    return res.render('user/order-summary', {
+      order: populatedOrder,
+      message: 'Payment successful! Your order is confirmed.'
+    });
+
+  } catch (err) {
+    console.error('Buy Now Payment Success Error:', err);
+    return res.redirect('/');
+  }
+};
+
 
 const invoice = async (req, res) => {
   try {
@@ -1346,6 +1441,8 @@ module.exports = {
     paymentSuccess,
     invoice,
     sendOrderEmail,
+    buyNow,
+    buyNowPaymentSuccess,
     getWishlist,
     addtoWishlist,
     toggleWishlist,

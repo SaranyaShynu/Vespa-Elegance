@@ -43,7 +43,7 @@ const productSchema=new mongoose.Schema({
      ratings: [
     {
       userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      rating: { type: Number, min: 1, max: 5, required: true },
+      rating: { type: Number, min: 1, max: 5 },
       review: { type: String, trim: true },
       createdAt: { type: Date, default: Date.now }
     }]

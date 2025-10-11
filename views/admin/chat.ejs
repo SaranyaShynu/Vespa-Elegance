@@ -5,13 +5,41 @@
   <title>Admin Chat</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; }
+    body { font-family: Arial, sans-serif; background: #f8f9fa; margin: 0; padding: 0; }
+    #onlineUsersList {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 6px;
+      width: 220px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    #onlineUsersList button {
+      margin: 5px 0;
+      width: 100%;
+      background: #e9ecef;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    #onlineUsersList button:hover {
+      background: #007bff;
+      color: #fff;
+    }
+
     #chatContainer {
       position: fixed;
       bottom: 80px;
-      right: 20px;
-      width: 300px;
-      height: 400px;
+      right: 260px;
+      width: 350px;
+      height: 420px;
       border: 1px solid #ccc;
       background: #fff;
       display: none;
@@ -19,15 +47,17 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.2);
       border-radius: 10px;
       overflow: hidden;
+      flex-direction: column;
     }
     #chatBox {
-      height: 350px;
-      overflow-y: scroll;
+      flex: 1;
+      overflow-y: auto;
       padding: 10px;
+      background: #fdfdfd;
     }
     #chatBox p {
-      margin: 4px 0;
-      padding: 6px 10px;
+      margin: 6px 0;
+      padding: 8px 10px;
       border-radius: 6px;
       max-width: 80%;
       display: inline-block;
@@ -35,6 +65,7 @@
     }
     .userMsg { background: #f8d7da; text-align: right; float: right; clear: both; }
     .adminMsg { background: #d1e7dd; text-align: left; float: left; clear: both; }
+
     #chatInput {
       display: flex;
       padding: 5px;
@@ -68,26 +99,11 @@
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
-    #onlineUsersList {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 10px;
-      border-radius: 6px;
-      width: 200px;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    #onlineUsersList button {
-      margin: 5px 0;
-      width: 100%;
-      background: #f1f1f1;
-      border: none;
-      padding: 6px;
-      border-radius: 4px;
-      cursor: pointer;
+    small {
+      color: #666;
+      font-size: 12px;
+      display: block;
+      margin-top: 2px;
     }
   </style>
 </head>
@@ -97,12 +113,12 @@
   <div id="chatContainer">
     <div id="chatBox"></div>
     <div id="chatInput">
-      <input type="text" id="messageInput" placeholder="Type message">
+      <input type="text" id="messageInput" placeholder="Type a message...">
       <button id="sendBtn">Send</button>
     </div>
   </div>
 
-  <button id="openChatBtn">Chat</button>
+  <button id="openChatBtn">💬</button>
 
   <script>
     const socket = io();
@@ -117,31 +133,40 @@
 
     // Toggle chat popup
     openChatBtn.addEventListener('click', () => {
-      chatContainer.style.display = 'block';
+      chatContainer.style.display = 'flex';
       openChatBtn.style.display = 'none';
     });
 
     // Join admin dashboard
     socket.emit('joinAdminRoomForUser', 'dashboard');
 
-    // Update online users
-    socket.on('updateOnlineUsers', (userIds) => {
+    // 🧩 Update online users list
+    socket.on('updateOnlineUsers', (users) => {
       userList.innerHTML = '';
-      userIds.forEach(uid => {
+      users.forEach(user => {
         const btn = document.createElement('button');
-        btn.textContent = `Chat with ${uid}`;
+        btn.textContent = `${user.name}`;
         btn.onclick = () => {
-          currentRoom = uid;
+          currentRoom = user.id;
           chatBox.innerHTML = '';
-          socket.emit('joinAdminRoomForUser', uid);
+          socket.emit('joinAdminRoomForUser', user.id);
 
-          fetch(`/admin/chat/history/${uid}`)
+          fetch(`/admin/chat/history/${user.id}`)
             .then(res => res.json())
             .then(msgs => {
               msgs.forEach(m => {
                 const p = document.createElement('p');
+                const time = new Date(m.createdAt).toLocaleString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: 'short',
+                });
                 p.className = m.isFromAdmin ? 'adminMsg' : 'userMsg';
-                p.innerHTML = `<strong>${m.isFromAdmin ? 'Admin' : m.senderName}:</strong> ${m.content}`;
+                p.innerHTML = `
+                  <div><strong>${m.isFromAdmin ? 'Admin' : m.senderName || 'User'}:</strong> ${m.content}</div>
+                  <small>${time}</small>
+                `;
                 chatBox.appendChild(p);
               });
               chatBox.scrollTop = chatBox.scrollHeight;
@@ -151,7 +176,7 @@
       });
     });
 
-    // Send message
+    // 🧩 Send message
     sendBtn.addEventListener('click', () => {
       if (!currentRoom) return alert('Select a user first!');
       const content = input.value.trim();
@@ -168,12 +193,21 @@
       input.value = '';
     });
 
-    // Receive messages
+    // 🧩 Receive messages
     socket.on('chat message', (msg) => {
       if (!currentRoom || msg.roomId !== currentRoom) return;
       const p = document.createElement('p');
+      const time = new Date(msg.createdAt).toLocaleString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: 'short',
+      });
       p.className = msg.isFromAdmin ? 'adminMsg' : 'userMsg';
-      p.innerHTML = `<strong>${msg.isFromAdmin ? 'Admin' : msg.senderName}:</strong> ${msg.content}`;
+      p.innerHTML = `
+        <div><strong>${msg.isFromAdmin ? 'Admin' : msg.senderName || 'User'}:</strong> ${msg.content}</div>
+        <small>${time}</small>
+      `;
       chatBox.appendChild(p);
       chatBox.scrollTop = chatBox.scrollHeight;
     });

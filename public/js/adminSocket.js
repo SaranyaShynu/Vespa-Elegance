@@ -3,12 +3,12 @@ socket.emit('joinAdminRoomForUser', 'dashboard')
 
 const onlineUsersList = document.getElementById('onlineUsersList')
 
-socket.on('updateOnlineUsers', (userIds) => {
+socket.on('updateOnlineUsers', (users) => {
   if (!onlineUsersList) return
   onlineUsersList.innerHTML = ''
-  userIds.forEach(id => {
+  users.forEach(user => {
     const li = document.createElement('li')
-    li.innerHTML = `<a href="/admin/chat/${id}">User: ${id}</a>`
+    li.innerHTML = `<a href="/admin/chat/${user.id}">User: ${user.name}</a>`
     onlineUsersList.appendChild(li)
   })
 })

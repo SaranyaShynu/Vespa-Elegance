@@ -2,11 +2,15 @@ const Product=require('../../models/productModel')
 
 const loadProduct = (req, res) => {
   res.render("admin/add-product",{message:null})
-};
+}
   
 const addProduct=async (req,res)=>{
     try{
         const{name,category,subCategory,price,color,description} = req.body
+
+          const colorsArray = Array.isArray(color)
+      ? color
+      : color.split(',').map(c => c.trim())
 
         const imagePath=req.files.map(file=>file.filename)
 
@@ -15,7 +19,7 @@ const addProduct=async (req,res)=>{
             category,
             subCategory,
             price,
-            color,
+            color: colorsArray,
             description,
             images:imagePath,
             status:'Available'
@@ -49,7 +53,9 @@ const editProduct=async (req,res)=>{
         }
         product.name=name
         product.price=price
-        product.color=color
+        product.color=Array.isArray(color)
+      ? color
+      : color.split(',').map(c => c.trim())
         product.description=description
         product.subCategory = subCategory || product.subCategory
 

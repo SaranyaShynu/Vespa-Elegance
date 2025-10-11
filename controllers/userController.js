@@ -1369,9 +1369,10 @@ const postRating = async (req, res) => {
       return r
     }).filter(r => r !== null)   */
        
-            const existingRating = product.ratings.find(r => r.user?.toString() === userId.toString())    // Check if user already rated
+            const existingRating = product.ratings.find(r => r.userId?.toString() === userId.toString())    // Check if user already rated
+        
             if (existingRating) {
-                existingRating.rating = Number(rating) // update rating
+               existingRating.rating = Number(rating) // update rating
                   if (review) existingRating.review = review
       existingRating.createdAt = new Date()
     }  else {
@@ -1400,7 +1401,6 @@ const postRating = async (req, res) => {
         res.status(500).json({error:"Server error",details:err.message})
     }
 }
-
 
 
 module.exports = {

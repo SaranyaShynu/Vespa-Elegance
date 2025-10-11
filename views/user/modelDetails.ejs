@@ -41,6 +41,9 @@
     .star-rating label:hover ~ label { color: #ffdb58; }
 
     .text-dark-bold { color: #212529; font-weight: 600; }
+
+    .text-danger { color: #dc3545; }
+    .text-success { color: #28a745; }
   </style>
 </head>
 
@@ -88,15 +91,7 @@
       <!-- Right: Model Details -->
       <div class="col-md-5">
         <h2><%= model.name %></h2>
-
-        <!-- Category and Subcategory -->
-        <p class="mb-1">
-          <span class="text-dark-bold">Category:</span> <%= model.category || 'N/A' %>
-        </p>
-       <!-- <p class="mb-2">
-          <span class="text-dark-bold">Subcategory:</span> <%= model.subcategory || 'N/A' %>
-        </p>        -->
-
+        <p class="mb-1"><span class="text-dark-bold">Category:</span> <%= model.category || 'N/A' %></p>
         <p class="h4 text-primary mb-3">₹ <%= model.price %></p>
 
         <!-- Colors -->
@@ -109,20 +104,17 @@
           <% } else { %>
             <p>No colors available</p>
           <% } %>
-
           <span class="ml-3 px-2 py-1 rounded"
                 style="background-color: <%= model.status === 'Available' ? '#28a745' : '#dc3545' %>; color:white; font-weight:bold;">
             <%= model.status %>
           </span>
         </div>
-
         <input type="hidden" id="selectedColor" name="selectedColor" value="">
-      <!-- <p id="color-msg" class="text-muted small mb-3">Select a color before adding to cart.</p>   -->
 
         <!-- Average Rating -->
         <p>⭐ Average Rating: <strong><%= model.averageRating %></strong> / 5 (<%= model.ratings.length %> reviews)</p>
 
-        <!-- Buttons (Before Ratings) -->
+        <!-- Add to Cart / Buy Now -->
         <form action="/cart/add" method="POST" class="mt-3">
           <input type="hidden" name="productId" value="<%= model._id %>">
           <input type="hidden" name="price" value="<%= model.price %>">
@@ -130,12 +122,11 @@
           <button type="submit" class="btn btn-primary btn-lg w-100">Add to Cart</button>
         </form>
         <form action="/buy-now" method="POST">
-  <input type="hidden" name="productId" value="<%= model._id %>">
-  <input type="hidden" name="quantity" value="1">
-  <input type="hidden" name="selectedAddress" value="0"> <!-- selected address index -->
-  
-  <button type="submit" class="btn btn-success btn-lg mt-2">Buy Now</button>
-</form>
+          <input type="hidden" name="productId" value="<%= model._id %>">
+          <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="selectedAddress" value="0">
+          <button type="submit" class="btn btn-success btn-lg mt-2">Buy Now</button>
+        </form>
 
         <!-- Ratings and Reviews -->
         <div class="rating-section">
@@ -149,7 +140,7 @@
             <div class="review-form">
               <textarea id="reviewText" rows="3" class="form-control" placeholder="Write a review (optional)"></textarea>
               <button class="btn btn-primary mt-2" id="submitReview">Submit Review</button>
-              <p id="rating-msg" class="text-success mt-2"></p>
+              <p id="rating-msg" class="mt-2"></p>
             </div>
           <% } else { %>
             <p class="text-muted mt-3">Login to rate and review this product.</p>
@@ -163,15 +154,15 @@
       <div class="col-md-12">
         <h4>Customer Reviews</h4>
         <div id="reviewList" class="mt-3">
-          <% if (reviews && reviews.length) { %>
-            <% reviews.forEach(review => { %>
+          <% if (model.ratings && model.ratings.length) { %>
+            <% model.ratings.forEach(review => { %>
               <div class="review-card">
                 <div class="d-flex justify-content-between">
-                  <strong><%= review.userId ? review.userId.name : 'Anonymous' %></strong>
+                  <strong><%= review.userId ? review.userId.name || 'Anonymous' : 'Anonymous' %></strong>
                   <small><%= new Date(review.createdAt).toLocaleString() %></small>
                 </div>
                 <div>
-                  <span>Rating: <%= review.rating %> / 5</span>
+                  <span>Rating: <%= review.rating || 0 %> / 5</span>
                   <% if (review.review) { %>
                     <p><%= review.review %></p>
                   <% } %>
@@ -187,28 +178,23 @@
   </div>
 
   <%- include('../partials/user/footer') %>
-
 </div>
 
-<!-- Scripts -->
 <script src="/js/jquery-3.3.1.min.js"></script>
 <script src="/js/bootstrap.min.js"></script>
 
 <script>
-  // Color selection logic
+  // Color selection
   const colorDots = document.querySelectorAll('.selectable-color');
   const selectedColorInput = document.getElementById('selectedColor');
-  const colorMsg = document.getElementById('color-msg');
+  const colorInputHidden = document.getElementById('colorInput');
 
   colorDots.forEach(dot => {
     dot.addEventListener('click', () => {
       colorDots.forEach(d => d.classList.remove('selected'));
       dot.classList.add('selected');
       selectedColorInput.value = dot.dataset.color;
-      document.getElementById('colorInput').value = dot.dataset.color;
-      colorMsg.textContent = `Selected color: ${dot.dataset.color}`;
-      colorMsg.classList.remove('text-muted', 'text-danger');
-      colorMsg.classList.add('text-success');
+      colorInputHidden.value = dot.dataset.color;
     });
   });
 
@@ -217,12 +203,69 @@
   addToCartForm.addEventListener('submit', (e) => {
     if (!selectedColorInput.value) {
       e.preventDefault();
-      colorMsg.textContent = "Please select a color before adding to cart.";
-      colorMsg.classList.remove('text-success');
-      colorMsg.classList.add('text-danger');
+      alert("Please select a color before adding to cart.");
+    }
+  });
+
+  // Submit Review
+  document.getElementById('submitReview').addEventListener('click', async function(e) {
+    e.preventDefault();
+
+    const rating = document.querySelector('.star-rating input:checked')?.value;
+    const reviewText = document.getElementById('reviewText').value.trim();
+    const modelId = document.querySelector('.star-rating').dataset.modelId;
+
+    if (!rating && !reviewText) {
+      const msg = document.getElementById('rating-msg');
+      msg.textContent = "Please select a rating or write a review.";
+      msg.className = "text-danger mt-2";
+      return;
+    }
+
+    try {
+      const res = await fetch(`/models/${modelId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating, review: reviewText })
+      });
+      const data = await res.json();
+
+      const msg = document.getElementById('rating-msg');
+      if (res.ok) {
+        msg.textContent = "Review submitted successfully!";
+        msg.className = "text-success mt-2";
+
+        // Reset form
+        document.getElementById('reviewText').value = '';
+        document.querySelectorAll('.star-rating input').forEach(i => i.checked = false);
+
+        // Update reviews
+        const reviewList = document.getElementById('reviewList');
+        reviewList.innerHTML = '';
+        data.reviews.forEach(r => {
+          const div = document.createElement('div');
+          div.className = 'review-card';
+          div.innerHTML = `
+            <div class="d-flex justify-content-between">
+              <strong>${r.userName || 'Anonymous'}</strong>
+              <small>${new Date(r.createdAt).toLocaleString()}</small>
+            </div>
+            <p>Rating: ${r.rating || 0} / 5</p>
+            ${r.review ? `<p>${r.review}</p>` : ''}
+          `;
+          reviewList.prepend(div);
+        });
+      } else {
+        msg.textContent = data.error || "Error submitting review";
+        msg.className = "text-danger mt-2";
+      }
+    } catch (err) {
+      console.error(err);
+      const msg = document.getElementById('rating-msg');
+      msg.textContent = "Server error.";
+      msg.className = "text-danger mt-2";
     }
   });
 </script>
-
 </body>
 </html>

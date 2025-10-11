@@ -31,110 +31,102 @@
 <script src="/js/adminSocket.js"></script>
 
 <script>
-  // Admin sidebar script (must run after DOM loaded)
-  (function() {
-    const socket = io();
-      const adminId = "<%= typeof admin !== 'undefined' && admin ? admin._id : '' %>";
-    const adminName = "Admin";
+<script>
+(function() {
+  const socket = io();
+  const adminId = "<%= typeof admin !== 'undefined' && admin ? admin._id : '' %>";
+  const adminName = "Admin";
+  const onlineUsersList = document.getElementById('onlineUsersList');
+  const adminMessagesList = document.getElementById('adminMessages');
+  
+  const adminInput = document.createElement('input');
+  adminInput.id = 'adminInput';
+  adminInput.placeholder = 'Type a message';
+  adminInput.style.width = 'calc(100% - 60px)';
+  adminInput.style.marginTop = '8px';
 
-    // Always join adminRoom (dashboard)
-    socket.emit('joinAdminRoomForUser', adminId || "dashboard");
+  const sendBtn = document.createElement('button');
+  sendBtn.id = 'sendBtn';
+  sendBtn.innerText = 'Send';
+  sendBtn.style.marginLeft = '6px';
+  sendBtn.style.marginTop = '8px';
 
+  adminMessagesList.parentNode.appendChild(adminInput);
+  adminMessagesList.parentNode.appendChild(sendBtn);
 
-    const onlineUsersList = document.getElementById('onlineUsersList');
-    const adminMessagesList = document.getElementById('adminMessages');
+  let currentRoom = null;
 
-    // create input + send button once
-    const adminInput = document.createElement('input');
-    adminInput.id = 'adminInput';
-    adminInput.placeholder = 'Type message';
-    adminInput.style.width = 'calc(100% - 60px)';
-    adminInput.style.marginTop = '8px';
+  socket.emit('joinAdminDashboard');
 
-    const sendBtn = document.createElement('button');
-    sendBtn.id = 'sendBtn';
-    sendBtn.innerText = 'Send';
-    sendBtn.style.marginLeft = '6px';
-    sendBtn.style.marginTop = '8px';
+  socket.on('connect', () => console.log('Admin socket connected:', socket.id));
+  socket.on('disconnect', () => console.log('Admin socket disconnected'));
 
-    // append after adminMessagesList container
-    adminMessagesList.parentNode.appendChild(adminInput);
-    adminMessagesList.parentNode.appendChild(sendBtn);
-
-    let currentRoom = null;
-
-    // Join admin dashboard room immediately (no admin var required)
-    socket.emit('joinAdminDashboard');
-
-    // debug
-    socket.on('connect', () => console.log('Admin socket connected', socket.id));
-    socket.on('disconnect', () => console.log('Admin socket disconnected'));
-
-    // When server sends updated list
-    socket.on('updateOnlineUsers', (users) => {
-      console.log('updateOnlineUsers received', users);
-      if (!onlineUsersList) return;
-      onlineUsersList.innerHTML = '';
-      users.forEach(uid => {
-        const li = document.createElement('li');
-        li.textContent = uid;
-        li.style.cursor = 'pointer';
-        li.onclick = () => {
-          currentRoom = uid;
-          adminMessagesList.innerHTML = '';
-          // join that user's room (so admin receives direct messages there too)
-          socket.emit('joinAdminRoomForUser', uid);
-
-          // fetch chat history
-          fetch(`/admin/messages/${uid}`)
-            .then(r => r.json())
-            .then(msgs => {
-              msgs.forEach(m => {
-                const li2 = document.createElement('li');
-                li2.textContent = `${m.isFromAdmin ? 'Admin' : (m.senderName || 'User')}: ${m.content}`;
-                li2.style.background = m.isFromAdmin ? '#d1e7dd' : '#f8d7da';
-                li2.style.margin = '4px';
-                li2.style.padding = '6px 10px';
-                li2.style.borderRadius = '4px';
-                adminMessagesList.appendChild(li2);
-              });
-              adminMessagesList.scrollTop = adminMessagesList.scrollHeight;
-            })
-            .catch(err => console.error('fetch history failed', err));
-        };
-        onlineUsersList.appendChild(li);
-      });
-    });
-
-    // Send message to selected user
-    sendBtn.addEventListener('click', () => {
-      if (!currentRoom) return alert('Select a user first');
-      const content = adminInput.value.trim();
-      if (!content) return;
-      socket.emit('chat message', {
-        roomId: currentRoom,
-        sender: '<ADMIN>',            // can be admin id if you want
-        senderName: 'Admin',
-        content,
-        isFromAdmin: true
-      });
-      adminInput.value = '';
-    });
-
-    // Receive messages
-    socket.on('chat message', (msg) => {
-      // show only messages that belong to currently selected user
-      if (!currentRoom || msg.roomId !== currentRoom) return;
+  // ✅ Online users with name
+  socket.on('updateOnlineUsers', (users) => {
+    if (!onlineUsersList) return;
+    onlineUsersList.innerHTML = '';
+    users.forEach(user => {
       const li = document.createElement('li');
-      li.textContent = `${msg.isFromAdmin ? 'Admin' : msg.senderName}: ${msg.content}`;
-      li.style.background = msg.isFromAdmin ? '#d1e7dd' : '#f8d7da';
-      li.style.margin = '4px';
-      li.style.padding = '6px 10px';
-      li.style.borderRadius = '4px';
-      adminMessagesList.appendChild(li);
-      adminMessagesList.scrollTop = adminMessagesList.scrollHeight;
+      li.innerHTML = `<strong>${user.name}</strong>`;
+      li.style.cursor = 'pointer';
+      li.onclick = () => {
+        currentRoom = user.id;
+        adminMessagesList.innerHTML = '';
+        socket.emit('joinAdminRoomForUser', user.id);
+
+        fetch(`/admin/messages/${user.id}`)
+          .then(r => r.json())
+          .then(msgs => {
+            msgs.forEach(m => {
+              const li2 = document.createElement('li');
+              const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const date = new Date(m.createdAt).toLocaleDateString();
+              li2.innerHTML = `
+                <div style="background:${m.isFromAdmin ? '#d1e7dd' : '#f8d7da'}; margin:4px; padding:6px 10px; border-radius:4px;">
+                  <strong>${m.isFromAdmin ? 'Admin' : (m.senderName || 'User')}:</strong> ${m.content}
+                  <div style="font-size:11px; color:gray; text-align:right;">${time} | ${date}</div>
+                </div>`;
+              adminMessagesList.appendChild(li2);
+            });
+            adminMessagesList.scrollTop = adminMessagesList.scrollHeight;
+          })
+          .catch(err => console.error('Fetch history failed', err));
+      };
+      onlineUsersList.appendChild(li);
     });
-  })();
+  });
+
+  // ✅ Send message
+  sendBtn.addEventListener('click', () => {
+    if (!currentRoom) return alert('Select a user first');
+    const content = adminInput.value.trim();
+    if (!content) return;
+    socket.emit('chat message', {
+      roomId: currentRoom,
+      sender: adminId,
+      senderName: adminName,
+      content,
+      isFromAdmin: true,
+      createdAt: new Date()
+    });
+    adminInput.value = '';
+  });
+
+  // ✅ Receive message
+  socket.on('chat message', (msg) => {
+    if (!currentRoom || msg.roomId !== currentRoom) return;
+    const li = document.createElement('li');
+    const time = new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = new Date(msg.createdAt).toLocaleDateString();
+    li.innerHTML = `
+      <div style="background:${msg.isFromAdmin ? '#d1e7dd' : '#f8d7da'}; margin:4px; padding:6px 10px; border-radius:4px;">
+        <strong>${msg.isFromAdmin ? 'Admin' : msg.senderName}:</strong> ${msg.content}
+        <div style="font-size:11px; color:gray; text-align:right;">${time} | ${date}</div>
+      </div>`;
+    adminMessagesList.appendChild(li);
+    adminMessagesList.scrollTop = adminMessagesList.scrollHeight;
+  });
+})();
 </script>
 
 </aside>

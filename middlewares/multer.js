@@ -1,4 +1,4 @@
-const multer=require('multer')
+const multer=require ('multer')
 const path=require('path')
 const fs=require('fs')
 
@@ -13,7 +13,7 @@ const storage=multer.diskStorage({
     cb(null,folder)   //exist folder
 },
     filename:(req,file,cb)=>{
-        const uniqueName=Date.now()+path.extname(file.originalname)
+        const uniqueName=Date.now() + path.extname(file.originalname)
         cb(null,uniqueName)
     }
 })

@@ -41,7 +41,6 @@
     .star-rating label:hover ~ label { color: #ffdb58; }
 
     .text-dark-bold { color: #212529; font-weight: 600; }
-
     .text-danger { color: #dc3545; }
     .text-success { color: #28a745; }
   </style>
@@ -121,17 +120,17 @@
           <input type="hidden" id="colorInput" name="color" value="">
           <button type="submit" class="btn btn-primary btn-lg w-100">Add to Cart</button>
         </form>
-        <form action="/buy-now" method="POST">
+        <form action="/buy-now/checkout/<%= model._id %>" method="GET" class="mt-3">
           <input type="hidden" name="productId" value="<%= model._id %>">
           <input type="hidden" name="quantity" value="1">
           <input type="hidden" name="selectedAddress" value="0">
           <button type="submit" class="btn btn-success btn-lg mt-2">Buy Now</button>
         </form>
 
-        <!-- Ratings and Reviews -->
+        <!-- Rating + Review -->
         <div class="rating-section">
           <% if (isLoggedIn) { %>
-            <div class="star-rating mb-2" data-model-id="<%= model._id %>">
+            <div class="star-rating mb-2" id="starRating" data-model-id="<%= model._id %>">
               <% for (let i = 5; i >= 1; i--) { %>
                 <input type="radio" id="star<%= i %>" name="rating" value="<%= i %>">
                 <label for="star<%= i %>">★</label>
@@ -162,7 +161,7 @@
                   <small><%= new Date(review.createdAt).toLocaleString() %></small>
                 </div>
                 <div>
-                  <span>Rating: <%= review.rating || 0 %> / 5</span>
+                  <span>⭐ <%= review.rating || 0 %> / 5</span>
                   <% if (review.review) { %>
                     <p><%= review.review %></p>
                   <% } %>
@@ -207,63 +206,71 @@
     }
   });
 
-  // Submit Review
-  document.getElementById('submitReview').addEventListener('click', async function(e) {
+  // ⭐ Instant star rating submission
+  document.querySelectorAll('.star-rating input').forEach(radio => {
+    radio.addEventListener('change', async (e) => {
+      const rating = e.target.value;
+      const modelId = document.getElementById('starRating').dataset.modelId;
+
+      try {
+        const res = await fetch('/model/rate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modelId, rating })
+        });
+        const data = await res.json();
+        const msg = document.getElementById('rating-msg');
+        if (data.success) {
+          msg.textContent = '⭐ Rating submitted!';
+          msg.className = 'text-success mt-2';
+        } else {
+          msg.textContent = data.error || 'Error submitting rating';
+          msg.className = 'text-danger mt-2';
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  });
+
+  // ✍️ Review submission
+  document.getElementById('submitReview').addEventListener('click', async (e) => {
     e.preventDefault();
 
-    const rating = document.querySelector('.star-rating input:checked')?.value;
-    const reviewText = document.getElementById('reviewText').value.trim();
-    const modelId = document.querySelector('.star-rating').dataset.modelId;
+    const review = document.getElementById('reviewText').value.trim();
+    const modelId = document.getElementById('starRating').dataset.modelId;
 
-    if (!rating && !reviewText) {
+    if (!review) {
       const msg = document.getElementById('rating-msg');
-      msg.textContent = "Please select a rating or write a review.";
-      msg.className = "text-danger mt-2";
+      msg.textContent = 'Please write something before submitting.';
+      msg.className = 'text-danger mt-2';
       return;
     }
 
     try {
-      const res = await fetch(`/models/${modelId}/review`, {
+      const res = await fetch('/model/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating, review: reviewText })
+        credentials: 'include',
+        body: JSON.stringify({ modelId, review })
       });
       const data = await res.json();
-
       const msg = document.getElementById('rating-msg');
-      if (res.ok) {
-        msg.textContent = "Review submitted successfully!";
-        msg.className = "text-success mt-2";
 
-        // Reset form
+      if (data.success) {
+        msg.textContent = '✅ Review submitted successfully!';
+        msg.className = 'text-success mt-2';
         document.getElementById('reviewText').value = '';
-        document.querySelectorAll('.star-rating input').forEach(i => i.checked = false);
-
-        // Update reviews
-        const reviewList = document.getElementById('reviewList');
-        reviewList.innerHTML = '';
-        data.reviews.forEach(r => {
-          const div = document.createElement('div');
-          div.className = 'review-card';
-          div.innerHTML = `
-            <div class="d-flex justify-content-between">
-              <strong>${r.userName || 'Anonymous'}</strong>
-              <small>${new Date(r.createdAt).toLocaleString()}</small>
-            </div>
-            <p>Rating: ${r.rating || 0} / 5</p>
-            ${r.review ? `<p>${r.review}</p>` : ''}
-          `;
-          reviewList.prepend(div);
-        });
+        location.reload();
       } else {
-        msg.textContent = data.error || "Error submitting review";
-        msg.className = "text-danger mt-2";
+        msg.textContent = data.error || 'Error submitting review';
+        msg.className = 'text-danger mt-2';
       }
     } catch (err) {
       console.error(err);
       const msg = document.getElementById('rating-msg');
-      msg.textContent = "Server error.";
-      msg.className = "text-danger mt-2";
+      msg.textContent = 'Server error.';
+      msg.className = 'text-danger mt-2';
     }
   });
 </script>

@@ -1,6 +1,7 @@
 const express=require('express')
 const router=express.Router()
 const userController=require('../controllers/userController')
+const upload= require('../middlewares/multer')
 const chatController=require('../controllers/chatController')
 const jwt=require('jsonwebtoken')
 const session=require('express-session')
@@ -46,7 +47,8 @@ router.get('/logout', userController.logout)
 
 router.get('/profile', auth.userAuth, userController.profilePage)
 router.get('/profile/edit', auth.userAuth, userController.editProfilePage)
-router.post('/profile/edit', auth.userAuth, userController.updateProfile)
+router.post('/profile/update', auth.userAuth, userController.updateProfile)
+router.post('/profile/upload-photo', auth.userAuth, upload.single('profilePic'), userController.uploadProfilePhoto)
 router.post('/profile/address/add', sessionAuth, userController.addAddress)
 
 
@@ -68,8 +70,10 @@ router.post('/checkout/place-order',sessionAuth,userController.placeCheckout)
 //router.post('/confirm-order',auth.userAuth,userController.confirmOrder)
 router.get('/payment-success', sessionAuth, userController.paymentSuccess)
 router.get('/invoice/:id', sessionAuth, userController.invoice)
-router.post('/buy-now', sessionAuth, userController.buyNow)
-router.get('/buy-payment-success', sessionAuth, userController.buyNowPaymentSuccess)
+
+router.get('/buy-now/checkout/:productId', sessionAuth, userController.loadBuyNowCheckout)
+router.post('/buy-now/place-order', sessionAuth, userController.placeBuyNowOrder)
+router.get('/buy-now/payment-success', sessionAuth, userController.buyNowPaymentSuccess)
 
 
 

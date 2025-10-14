@@ -345,18 +345,35 @@ const editProfilePage = async (req, res) => {
 
 const updateProfile = async (req, res) => {
     try {
-        const { name, phone, address } = req.body
+        const { name, phone } = req.body
 
         await User.findByIdAndUpdate(req.user._id, {
             name,
-            phone,
-            address
+            mobileno:phone
         })
 
         res.redirect('/profile')
     } catch (err) {
         console.error(err)
         res.status(500).send('Failed to update profile')
+    }
+}
+
+const uploadProfilePhoto = async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).send('No file uploaded')
+
+         const user = await User.findById(req.user._id)
+    if (!user) return res.status(404).send('User not found')
+
+    user.profilePic = '/images/' + req.file.filename
+
+    await user.save()
+
+        res.redirect('/profile')
+    } catch (err) {
+        console.error(err)
+        res.status(500).send('Failed to upload photo')
     }
 }
 
@@ -601,7 +618,7 @@ const getModelDetails = async (req, res) => {
 const addReview = async (req, res) => {
   try {
     const { modelId, rating, review } = req.body
-    const userId = req.session.user?._id
+    const userId = req.user?._id
 
     if (!userId) return res.status(401).json({ error: "Login required" })
 
@@ -609,7 +626,7 @@ const addReview = async (req, res) => {
     if (!product) return res.status(404).json({ error: "Product not found" })
 
     // check if already rated
-    const existing = product.ratings.find(r => r.userId.toString() === userId.toString())
+    const existing = product.ratings.find(r => r.userId && r.userId.toString() === userId.toString())
     if (existing) {
       existing.rating = rating
       existing.review = review
@@ -1058,97 +1075,160 @@ const cancelOrder = async (req, res) => {
   }
 }
 
-// Buy Now route handler
-const buyNow = async (req, res) => {
+const loadBuyNowCheckout = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const { productId, quantity, selectedAddress } = req.body;
+    const userId = req.user._id
+    const { productId } = req.params
 
-    const product = await Product.findById(productId);
-    if (!product) return res.redirect('/');
+    const user = await User.findById(userId)
+    if (!user) return res.redirect('/')
 
-    // Save temporary session
-    req.session.buyNow = {
-      productId: product._id,
-      quantity: quantity || 1,
-      price: product.price,
-      finalPrice: product.price, // can apply coupon if needed
-      shippingAddress: selectedAddress
-    };
+    const product = await Product.findById(productId)
+    if (!product) return res.redirect('/')
 
-    // Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items: [{
-        price_data: {
-          currency: 'inr',
-          product_data: { name: product.name },
-          unit_amount: Math.round(product.price * 100)
-        },
-        quantity: quantity || 1
-      }],
-      success_url: `${req.protocol}://${req.get('host')}/buy-now/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.protocol}://${req.get('host')}/model/${productId}`
-    });
+    const coupons = await Coupon.find({ active: true, expiredOn: { $gt: new Date() } })
 
-    return res.redirect(session.url);
+    res.render('user/buyNowCheckout', {
+      user,
+      product,
+      addresses: user.addresses || [],
+      selectedAddressIndex: 0,
+      coupons,
+      isLoggedIn: true
+    })
 
   } catch (err) {
-    console.error(err);
-    return res.redirect('/')
+    console.error('Error loading Buy Now checkout:', err)
+    res.redirect('/')
+  }
+}
+
+const placeBuyNowOrder = async (req, res) => {
+  try {
+    const userId = req.user._id
+    const { productId, selectedAddress, couponCode, paymentMethod } = req.body
+
+    const user = await User.findById(userId)
+    if (!user) return res.redirect('/')
+
+    const product = await Product.findById(productId)
+    if (!product) return res.redirect('/')
+
+    const shippingAddress = user.addresses[selectedAddress]
+    if (!shippingAddress) return res.redirect(`/buy-now/checkout/${productId}?error=Select valid address`)
+
+    let price = product.price
+    let discount = 0
+    let finalPrice = price
+    let appliedCoupon = null
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        code: couponCode.toUpperCase(),
+        active: true,
+        expiredOn: { $gt: new Date() }
+      })
+
+      if (coupon && !coupon.usedBy.includes(userId.toString())) {
+        appliedCoupon = coupon;
+        discount = coupon.discountType === 'percentage'
+          ? (price * coupon.discountValue) / 100
+          : coupon.discountValue;
+        finalPrice = Math.max(price - discount, 0)
+      }
+    }
+
+    // Save Buy Now data in session
+    req.session.buyNow = { productId, quantity: 1, price, finalPrice, shippingAddress, appliedCoupon }
+
+    if (paymentMethod === 'Online') {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'inr',
+            product_data: { name: product.name },
+            unit_amount: Math.round(finalPrice * 100),
+          },
+          quantity: 1
+        }],
+        success_url: `${req.protocol}://${req.get('host')}/buy-now/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${req.protocol}://${req.get('host')}/buy-now/checkout/${productId}`
+      })
+
+      return res.redirect(session.url)
+    }
+
+    // COD Order
+    const order = new Order({
+      user: userId,
+      products: [{ productId, price, quantity: 1 }],
+      price,
+      discount,
+      finalPrice,
+      address: shippingAddress,
+      paymentMethod: 'COD',
+      paymentStatus: 'Pending',
+      couponApplied: appliedCoupon ? appliedCoupon._id : null
+    })
+
+    await order.save()
+
+    if (appliedCoupon) {
+      await Coupon.findByIdAndUpdate(appliedCoupon._id, { $addToSet: { usedBy: userId } })
+    }
+
+    req.session.buyNow = null
+    return res.render('user/order-summary', { order, message: 'Order placed successfully with COD' })
+
+  } catch (err) {
+    console.error('Error placing Buy Now order:', err)
+    res.redirect('/')
   }
 }
 
 const buyNowPaymentSuccess = async (req, res) => {
   try {
     const { session_id } = req.query;
-    if (!session_id) return res.redirect('/');
+    if (!session_id) return res.redirect('/')
 
-    const session = await stripe.checkout.sessions.retrieve(session_id);
-    if (session.payment_status !== 'paid') return res.redirect('/');
+    const session = await stripe.checkout.sessions.retrieve(session_id)
+    if (session.payment_status !== 'paid') return res.redirect('/')
 
-    const userId = req.session.userId;
-    const buyNowData = req.session.buyNow;
+    const buyNowData = req.session.buyNow
+    if (!buyNowData) return res.redirect('/')
 
-    if (!buyNowData || !userId) return res.redirect('/');
-
-    const { productId, quantity, price, finalPrice, shippingAddress } = buyNowData;
-    const product = await Product.findById(productId);
-    if (!product) return res.redirect('/');
+    const { productId, price, finalPrice, shippingAddress, appliedCoupon } = buyNowData
 
     const order = new Order({
-      user: userId,
-      products: [{ productId, price, quantity }],
+      user: req.user._id,
+      products: [{ productId, price, quantity: 1 }],
       price,
-      discount: 0,
+      discount: price - finalPrice,
       finalPrice,
       address: shippingAddress,
       paymentMethod: 'Online',
       paymentStatus: 'Paid',
-      stripePaymentId: session.id
-    });
+      stripePaymentId: session.id,
+      couponApplied: appliedCoupon ? appliedCoupon._id : null
+    })
 
-    await order.save();
-    req.session.buyNow = null; // clear session
+    await order.save()
 
-    const populatedOrder = await Order.findById(order._id)
-      .populate('products.productId')
-      .populate('user');
+    if (appliedCoupon) {
+      await Coupon.findByIdAndUpdate(appliedCoupon._id, { $addToSet: { usedBy: req.user._id } })
+    }
 
-    sendOrderEmail(populatedOrder.user.email, populatedOrder, 'Payment Successful - Order Confirmed');
+    req.session.buyNow = null
 
-    return res.render('user/order-summary', {
-      order: populatedOrder,
-      message: 'Payment successful! Your order is confirmed.'
-    });
+    return res.render('user/order-summary', { order, message: 'Payment successful! Your order is confirmed.' })
 
   } catch (err) {
-    console.error('Buy Now Payment Success Error:', err);
-    return res.redirect('/');
+    console.error('Buy Now Payment Success Error:', err)
+    res.redirect('/')
   }
-};
-
+}
 
 const invoice = async (req, res) => {
   try {
@@ -1421,6 +1501,7 @@ module.exports = {
     profilePage,
     editProfilePage,
     updateProfile,
+    uploadProfilePhoto,
     addAddress,
     getService,
     getOrders,
@@ -1441,7 +1522,8 @@ module.exports = {
     paymentSuccess,
     invoice,
     sendOrderEmail,
-    buyNow,
+    loadBuyNowCheckout,
+    placeBuyNowOrder,
     buyNowPaymentSuccess,
     getWishlist,
     addtoWishlist,

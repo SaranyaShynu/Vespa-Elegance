@@ -144,6 +144,15 @@
     </option>
   <% }) %>
 </select>
+<!-- Price Range Dropdown -->
+<select name="priceRange" id="priceRangeSelect" onchange="this.form.submit()" class="form-control w-auto d-inline-block mx-2">
+  <option value="">All Prices</option>
+  <option value="100000-120000" <%= query.priceRange === "100000-120000" ? "selected" : "" %>>₹100,000 - ₹120,000</option>
+  <option value="120000-150000" <%= query.priceRange === "120000-150000" ? "selected" : "" %>>₹120,000 - ₹150,000</option>
+  <option value="150000-175000" <%= query.priceRange === "150000-175000" ? "selected" : "" %>>₹150,000 - ₹175,000</option>
+  <option value="175000-200000" <%= query.priceRange === "175000-200000" ? "selected" : "" %>>₹175,000 - ₹200,000</option>
+  <option value="200000-1000000" <%= query.priceRange === "200000-250000" ? "selected" : "" %>>₹200,000+</option>
+</select>
 
 
               <a href="/model" class="btn btn-secondary mx-2">Reset</a>

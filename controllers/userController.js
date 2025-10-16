@@ -564,6 +564,14 @@ const getModels = async (req, res) => {
         if (req.query.subCategory && req.query.subCategory !== "") {
             filter.subCategory = req.query.subCategory.trim()
         }
+
+        if (req.query.priceRange && req.query.priceRange !== "") {
+    
+      const [min, max] = req.query.priceRange.split('-').map(Number)
+      if (!isNaN(min) && !isNaN(max)) {
+        filter.price = { $gte: min, $lte: max }
+      }
+    }
         let models = await Product.find(filter).lean()
         models = models.map(model => {
             if (model.ratings && model.ratings.length > 0) {
@@ -916,6 +924,13 @@ const placeCheckout = async (req, res) => {
         message: 'Your order has been confirmed!'
      })
 
+      await generateInvoice(populatedOrder)
+
+    return res.render('user/order-summary', {
+      order: populatedOrder,
+      message: 'Your order has been confirmed!',
+    })
+
   } catch (err) {
     console.error('Error placing order', err)
     return res.redirect('/cart')
@@ -999,6 +1014,13 @@ const paymentSuccess = async (req, res) => {
     return res.render('user/order-summary', {
       order: populatedOrder,
       message: 'Payment successful! Your order is confirmed.'
+    })
+
+     await generateInvoice(populatedOrder)
+
+    return res.render('user/order-summary', {
+      order: populatedOrder,
+      message: 'Payment successful! Your order is confirmed.',
     })
 
   } catch (err) {
@@ -1179,8 +1201,19 @@ const placeBuyNowOrder = async (req, res) => {
       await Coupon.findByIdAndUpdate(appliedCoupon._id, { $addToSet: { usedBy: userId } })
     }
 
+     const invoicePath = path.join(__dirname, `../public/invoices/invoice-${order._id}.pdf`)
+    await generateInvoice(order, invoicePath)
+
+    await sendOrderEmail(
+      user.email,
+      order,
+      "Your Vespa Elegance Order Confirmation (COD)"
+    )
+
     req.session.buyNow = null
-    return res.render('user/order-summary', { order, message: 'Order placed successfully with COD' })
+    return res.render('user/order-summary', { order, message: 'Order placed successfully with COD',
+      invoiceLink: `/invoices/invoice-${order._id}.pdf`
+     })
 
   } catch (err) {
     console.error('Error placing Buy Now order:', err)
@@ -1201,7 +1234,7 @@ const buyNowPaymentSuccess = async (req, res) => {
 
     const { productId, price, finalPrice, shippingAddress, appliedCoupon } = buyNowData
 
-    const order = new Order({
+    let order = new Order({
       user: req.user._id,
       products: [{ productId, price, quantity: 1 }],
       price,
@@ -1216,13 +1249,32 @@ const buyNowPaymentSuccess = async (req, res) => {
 
     await order.save()
 
+    // populate product details for invoice and email
+    order = await Order.findById(order._id)
+      .populate('user')
+      .populate('products.productId')
+
     if (appliedCoupon) {
       await Coupon.findByIdAndUpdate(appliedCoupon._id, { $addToSet: { usedBy: req.user._id } })
     }
 
+    // Generate invoice
+    const invoicePath = path.join(__dirname, `../public/invoices/invoice-${order._id}.pdf`)
+    await generateInvoice(order, invoicePath)
+
+    // Send email confirmation
+    await sendOrderEmail({
+      to: order.user.email,
+      order,
+      subject: "Your Vespa Elegance Order Confirmation (Online Payment)",
+      invoicePath,
+    })
+
     req.session.buyNow = null
 
-    return res.render('user/order-summary', { order, message: 'Payment successful! Your order is confirmed.' })
+    return res.render('user/order-summary', { order, message: 'Payment successful! Your order is confirmed.',
+       invoiceLink: `/invoices/invoice-${order._id}.pdf`
+     })
 
   } catch (err) {
     console.error('Buy Now Payment Success Error:', err)
@@ -1261,14 +1313,36 @@ const sendOrderEmail = async (to, order, subject) => {
       }
     })
 
-    const itemsList = order.products.map(p => `<li>${p.productId.name} x ${p.quantity}</li>`).join("")
+     const itemsList = order.products
+      .map(p => `<li>${p.productId?.name || "Unknown"} × ${p.quantity}</li>`)
+      .join("")
 
-    await transporter.sendMail({
-      from: process.env.NODEMAILER_EMAIL,
+     const date = new Date(order.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+
+    const mailOptions = {
+      from: `"Vespa Elegance" <${process.env.NODEMAILER_EMAIL}>`,
       to,
       subject,
-      html: `<h3>${subject}</h3><ul>${itemsList}</ul><p>Total: ${order.finalPrice}</p>`
-    })
+      html: `
+        <h2>Thank you for your order!</h2>
+        <p><b>Order ID:</b> ${order._id}</p>
+        <p><b>Date:</b> ${date}</p>
+        <ul>${itemsList}</ul>
+        <p><b>Total:</b> ₹${order.finalPrice}</p>
+         <p>You can download your invoice here:</p>
+        <p><a href="${process.env.BASE_URL}/invoice/${order._id}" 
+              target="_blank" 
+              style="display:inline-block;padding:10px 16px;background:#007bff;color:#fff;text-decoration:none;border-radius:6px;">
+              Download Invoice
+           </a></p>
+        <br>
+        <p>— The Vespa Elegance Team 🛵</p>
+      `
+    }
+
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent to:", to);
+
   } catch (err) {
     console.error("Error sending email", err)
   }

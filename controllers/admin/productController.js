@@ -8,11 +8,13 @@ const addProduct=async (req,res)=>{
     try{
         const{name,category,subCategory,price,color,description} = req.body
 
-          const colorsArray = Array.isArray(color)
+          const colorsArray = color
+      ? Array.isArray(color)
       ? color
       : color.split(',').map(c => c.trim())
+      :[]
 
-        const imagePath=req.files.map(file=>file.filename)
+        const imagePath= req.files ? req.files.map(file=>file.filename) : []
 
         const product=new Product({
             name,

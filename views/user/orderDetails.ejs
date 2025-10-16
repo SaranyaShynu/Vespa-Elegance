@@ -88,16 +88,17 @@
     </div>
   </div>
 
-  <!-- Actions -->
-  <div class="mb-4">
-    <% if (order.orderStatus === 'Delivered') { %>
-      <form method="GET" action="/invoice/<%= order._id %>" class="d-inline">
-        <button class="btn btn-primary me-2">Download Invoice</button>
-      </form>
-    <% } else if (order.orderStatus === 'Cancelled' || order.paymentStatus === 'Refunded') { %>
-      <span class="text-danger">This order was <%= order.orderStatus %> / <%= order.paymentStatus %></span>
-    <% } %>
-  </div>
+ <!-- Actions -->
+<div class="mb-4">
+  <% if (order.paymentStatus === 'Paid' || order.orderStatus === 'Delivered') { %>
+    <a href="/invoice/<%= order._id %>" class="btn btn-primary me-2" target="_blank">
+      Download Invoice
+    </a>
+  <% } else if (order.orderStatus === 'Cancelled' || order.paymentStatus === 'Refunded') { %>
+    <span class="text-danger">This order was <%= order.orderStatus %> / <%= order.paymentStatus %></span>
+  <% } %>
+</div>
+
 
   <a href="/myorders" class="btn btn-outline-secondary">← Back to My Orders</a>
 </div>

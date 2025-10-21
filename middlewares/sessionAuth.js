@@ -18,6 +18,7 @@ const sessionAuth = async (req, res, next) => {
         // set session
         req.session.userId = user._id
         req.session.userEmail = user.email
+        req.user = user 
 
         next()
     } catch (err) {

@@ -68,7 +68,8 @@ const editProduct=async (req,res)=>{
     }
     product.images = remainingImages
         if (req.files && req.files.length > 0) {
-    product.images = [...remainingImages,...req.files.map(file=>file.filename)]
+    product.images = [...
+        remainingImages,...req.files.map(file=>file.filename)]
 }
 
         await product.save()

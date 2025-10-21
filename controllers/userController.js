@@ -1,6 +1,7 @@
 
-const User = require('../models/userModel')
 const env = require('dotenv').config()
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const User = require('../models/userModel')
 const bcrypt = require('bcrypt')
 const nodemailer = require('nodemailer')
 const jwt = require('jsonwebtoken')
@@ -14,8 +15,7 @@ const Product = require('../models/productModel')
 const Wishlist = require('../models/wishlistModel')
 const Cart = require('../models/cartModel')
 const Feedback = require('../models/feedbackModel')
-const crypto = require("crypto");
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+const crypto = require("crypto")
 const path = require('path')
 const generateInvoice = require("../utils/generateInvoice")
 

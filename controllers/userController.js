@@ -1,5 +1,5 @@
 
-const env = require('dotenv').config()
+const env=require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const User = require('../models/userModel')
 const bcrypt = require('bcrypt')

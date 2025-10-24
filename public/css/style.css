@@ -819,6 +819,8 @@ table th, table td {
   max-width: 600px; /* control width of text block */
   margin-left: 5%;  /* push a little inside from left */
   color: #fff;
+   text-align: center; 
+    padding: 0 10px; 
 }
 
 .banner-slide {
@@ -858,7 +860,9 @@ table th, table td {
   .banner-slide,
   .banner-slide1,
   .banner-slide2 {
-    height: 60vh; /* reduce banner height on small screens */
+    height: 60vh; 
+    background-position: center center !important;
+    background-size: cover;
   }
 
   .carousel-inner img {

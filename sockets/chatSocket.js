@@ -1,11 +1,10 @@
 // sockets/chatSocket.js
 const messageController = require('../controllers/admin/messageController')
 const User = require('../models/userModel')
-
-/** onlineUsers = {
- *   userId: { socketId, name }
- * }
- */
+/* onlineUsers = {
+  userId: { socketId, name }
+  } */
+ 
 const onlineUsers = {}
 
 function chatSocket(io) {

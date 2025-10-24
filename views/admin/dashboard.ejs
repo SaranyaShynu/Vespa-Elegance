@@ -103,6 +103,12 @@
   fetchChartData("monthly");
 </script>
 
+<script>
+  document.getElementById("sidebarToggle").addEventListener("click", () => {
+    document.getElementById("adminSidebar").classList.toggle("active");
+  });
+</script>
+
 <style>
   .admin-main {
     padding: 20px;
